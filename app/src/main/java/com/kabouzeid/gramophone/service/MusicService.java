@@ -61,7 +61,9 @@ import com.kabouzeid.gramophone.service.notification.PlayingNotificationImpl24;
 import com.kabouzeid.gramophone.service.playback.Playback;
 import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.subsonic.SubsonicServer;
+import com.kabouzeid.gramophone.subsonic.SubsonicServerStore;
 import com.kabouzeid.gramophone.subsonic.SubsonicUri;
+import com.kabouzeid.gramophone.subsonic.rest.SubsonicRestClient;
 import com.kabouzeid.gramophone.util.MusicUtil;
 import com.kabouzeid.gramophone.util.PendingIntentUtil;
 import com.kabouzeid.gramophone.util.PreferenceUtil;
@@ -178,6 +180,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     private ContentObserver mediaStoreObserver;
     private boolean notHandledMetaChangedForCurrentTrack;
     private boolean buffering;
+    private boolean currentTrackTranscoded;
     private int bufferedProgressPercent = 100;
 
     private Handler uiThreadHandler;
@@ -549,21 +552,56 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         synchronized (this) {
             Song song = getCurrentSong();
             boolean remoteSong = isRemoteSong(song);
+            currentTrackTranscoded = false;
             updateBufferedProgressPercent(remoteSong ? 0 : 100);
             setBuffering(remoteSong);
+            boolean prepared = false;
             try {
-                boolean prepared = playback.setDataSource(getTrackUri(song));
-                setBuffering(false);
-                return prepared;
-            } catch (Exception e) {
-                setBuffering(false);
-                return false;
+                prepared = playback.setDataSource(getTrackUri(song));
+            } catch (Exception ignored) {
             }
+            if (!prepared && shouldRetryWithSubsonicTranscoding(song)) {
+                String transcodedTrackUri = getTranscodedTrackUri(song);
+                if (transcodedTrackUri != null) {
+                    updateBufferedProgressPercent(0);
+                    setBuffering(true);
+                    try {
+                        prepared = playback.setDataSource(transcodedTrackUri);
+                        currentTrackTranscoded = prepared;
+                    } catch (Exception ignored) {
+                        currentTrackTranscoded = false;
+                    }
+                }
+            }
+            setBuffering(false);
+            return prepared;
         }
     }
 
     private boolean isRemoteSong(@NonNull Song song) {
         return SubsonicUri.isSubsonicUri(song.data);
+    }
+
+    private boolean shouldRetryWithSubsonicTranscoding(@NonNull Song song) {
+        return isRemoteSong(song) && PreferenceUtil.getInstance(this).subsonicTranscodingEnabled();
+    }
+
+    @Nullable
+    private String getTranscodedTrackUri(@NonNull Song song) {
+        long serverId = SubsonicUri.getServerId(song.data);
+        String remoteSongId = SubsonicUri.getRemoteSongId(song.data);
+        if (serverId == SubsonicServer.NO_ID || remoteSongId == null) {
+            return null;
+        }
+        SubsonicServer server = SubsonicServerStore.getInstance(this).getServer(serverId);
+        if (server == null) {
+            return null;
+        }
+        PreferenceUtil preferences = PreferenceUtil.getInstance(this);
+        return new SubsonicRestClient(this, server).buildTranscodedStreamUrl(
+                remoteSongId,
+                preferences.getSubsonicTranscodingBitrate(),
+                preferences.getSubsonicTranscodingFormat());
     }
 
     private void prepareNext() {
