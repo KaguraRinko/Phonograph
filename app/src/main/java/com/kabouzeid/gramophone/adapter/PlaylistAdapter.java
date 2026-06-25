@@ -138,8 +138,7 @@ public class PlaylistAdapter extends AbsMultiSelectAdapter<PlaylistAdapter.ViewH
 
     @Override
     protected void onMultipleItemAction(@NonNull MenuItem menuItem, @NonNull List<Playlist> selection) {
-        switch (menuItem.getItemId()) {
-            case R.id.action_delete_playlist:
+                if (menuItem.getItemId() == R.id.action_delete_playlist) {
                 for (int i = 0; i < selection.size(); i++) {
                     Playlist playlist = selection.get(i);
                     if (playlist instanceof AbsSmartPlaylist) {
@@ -152,17 +151,14 @@ public class PlaylistAdapter extends AbsMultiSelectAdapter<PlaylistAdapter.ViewH
                 if (selection.size() > 0) {
                     DeletePlaylistDialog.create(selection).show(activity.getSupportFragmentManager(), "DELETE_PLAYLIST");
                 }
-                break;
-            case R.id.action_save_playlist:
+        } else if (menuItem.getItemId() == R.id.action_save_playlist) {
                 if (selection.size() == 1) {
                     PlaylistMenuHelper.handleMenuClick(activity, selection.get(0), menuItem);
                 } else {
                     new SavePlaylistsAsyncTask(activity).execute(selection);
                 }
-                break;
-            default:
+        } else {
                 SongsMenuHelper.handleMenuClick(activity, getSongList(selection), menuItem.getItemId());
-                break;
         }
     }
 

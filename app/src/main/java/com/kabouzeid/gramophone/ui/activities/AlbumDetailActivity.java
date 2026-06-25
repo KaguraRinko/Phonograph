@@ -290,40 +290,39 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         final List<Song> songs = adapter.getDataSet();
-        switch (id) {
-            case R.id.action_sleep_timer:
+                if (id == R.id.action_sleep_timer) {
                 new SleepTimerDialog().show(getSupportFragmentManager(), "SET_SLEEP_TIMER");
                 return true;
-            case R.id.action_equalizer:
+                    } else if (id == R.id.action_equalizer) {
                 NavigationUtil.openEqualizer(this);
                 return true;
-            case R.id.action_shuffle_album:
+                    } else if (id == R.id.action_shuffle_album) {
                 MusicPlayerRemote.openAndShuffleQueue(songs, true);
                 return true;
-            case R.id.action_play_next:
+                    } else if (id == R.id.action_play_next) {
                 MusicPlayerRemote.playNext(songs);
                 return true;
-            case R.id.action_add_to_current_playing:
+                    } else if (id == R.id.action_add_to_current_playing) {
                 MusicPlayerRemote.enqueue(songs);
                 return true;
-            case R.id.action_add_to_playlist:
+                    } else if (id == R.id.action_add_to_playlist) {
                 AddToPlaylistDialog.create(songs).show(getSupportFragmentManager(), "ADD_PLAYLIST");
                 return true;
-            case R.id.action_delete_from_device:
+                    } else if (id == R.id.action_delete_from_device) {
                 DeleteSongsDialog.create(songs).show(getSupportFragmentManager(), "DELETE_SONGS");
                 return true;
-            case android.R.id.home:
+                    } else if (id == android.R.id.home) {
                 super.onBackPressed();
                 return true;
-            case R.id.action_tag_editor:
+                    } else if (id == R.id.action_tag_editor) {
                 Intent intent = new Intent(this, AlbumTagEditorActivity.class);
                 intent.putExtra(AbsTagEditorActivity.EXTRA_ID, getAlbum().getId());
                 startActivityForResult(intent, TAG_EDITOR_REQUEST);
                 return true;
-            case R.id.action_go_to_artist:
+                    } else if (id == R.id.action_go_to_artist) {
                 NavigationUtil.goToArtist(this, getAlbum().getArtistId());
                 return true;
-            case R.id.action_wiki:
+                    } else if (id == R.id.action_wiki) {
                 if (wikiDialog == null) {
                     wikiDialog = new MaterialDialog.Builder(this)
                             .title(album.getTitle())
@@ -342,7 +341,7 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
                     loadWiki();
                 }
                 return true;
-        }
+                }
         return super.onOptionsItemSelected(item);
     }
 

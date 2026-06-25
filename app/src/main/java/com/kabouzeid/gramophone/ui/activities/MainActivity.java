@@ -159,25 +159,19 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
 
         navigationView.setNavigationItemSelectedListener(menuItem -> {
             drawerLayout.closeDrawers();
-            switch (menuItem.getItemId()) {
-                case R.id.nav_library:
+                        if (menuItem.getItemId() == R.id.nav_library) {
                     new Handler().postDelayed(() -> setMusicChooser(LIBRARY), 200);
-                    break;
-                case R.id.nav_folders:
+            } else if (menuItem.getItemId() == R.id.nav_folders) {
                     new Handler().postDelayed(() -> setMusicChooser(FOLDERS), 200);
-                    break;
-                case R.id.action_scan:
+            } else if (menuItem.getItemId() == R.id.action_scan) {
                     new Handler().postDelayed(() -> {
                         ScanMediaFolderChooserDialog dialog = ScanMediaFolderChooserDialog.create();
                         dialog.show(getSupportFragmentManager(), "SCAN_MEDIA_FOLDER_CHOOSER");
                     }, 200);
-                    break;
-                case R.id.nav_settings:
+            } else if (menuItem.getItemId() == R.id.nav_settings) {
                     new Handler().postDelayed(() -> startActivity(new Intent(MainActivity.this, SettingsActivity.class)), 200);
-                    break;
-                case R.id.nav_about:
+            } else if (menuItem.getItemId() == R.id.nav_about) {
                     new Handler().postDelayed(() -> startActivity(new Intent(MainActivity.this, AboutActivity.class)), 200);
-                    break;
             }
             return true;
         });

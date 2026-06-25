@@ -46,43 +46,42 @@ public abstract class AbsPlayerFragment extends AbsMusicServiceFragment implemen
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         final Song song = MusicPlayerRemote.getCurrentSong();
-        switch (item.getItemId()) {
-            case R.id.action_sleep_timer:
+                if (item.getItemId() == R.id.action_sleep_timer) {
                 new SleepTimerDialog().show(getFragmentManager(), "SET_SLEEP_TIMER");
                 return true;
-            case R.id.action_toggle_favorite:
+                    } else if (item.getItemId() == R.id.action_toggle_favorite) {
                 toggleFavorite(song);
                 return true;
-            case R.id.action_share:
+                    } else if (item.getItemId() == R.id.action_share) {
                 SongShareDialog.create(song).show(getFragmentManager(), "SHARE_SONG");
                 return true;
-            case R.id.action_equalizer:
+                    } else if (item.getItemId() == R.id.action_equalizer) {
                 NavigationUtil.openEqualizer(getActivity());
                 return true;
-            case R.id.action_add_to_playlist:
+                    } else if (item.getItemId() == R.id.action_add_to_playlist) {
                 AddToPlaylistDialog.create(song).show(getFragmentManager(), "ADD_PLAYLIST");
                 return true;
-            case R.id.action_clear_playing_queue:
+                    } else if (item.getItemId() == R.id.action_clear_playing_queue) {
                 MusicPlayerRemote.clearQueue();
                 return true;
-            case R.id.action_save_playing_queue:
+                    } else if (item.getItemId() == R.id.action_save_playing_queue) {
                 CreatePlaylistDialog.create(MusicPlayerRemote.getPlayingQueue()).show(getActivity().getSupportFragmentManager(), "ADD_TO_PLAYLIST");
                 return true;
-            case R.id.action_tag_editor:
+                    } else if (item.getItemId() == R.id.action_tag_editor) {
                 Intent intent = new Intent(getActivity(), SongTagEditorActivity.class);
                 intent.putExtra(AbsTagEditorActivity.EXTRA_ID, song.id);
                 startActivity(intent);
                 return true;
-            case R.id.action_details:
+                    } else if (item.getItemId() == R.id.action_details) {
                 SongDetailDialog.create(song).show(getFragmentManager(), "SONG_DETAIL");
                 return true;
-            case R.id.action_go_to_album:
+                    } else if (item.getItemId() == R.id.action_go_to_album) {
                 NavigationUtil.goToAlbum(getActivity(), song.albumId);
                 return true;
-            case R.id.action_go_to_artist:
+                    } else if (item.getItemId() == R.id.action_go_to_artist) {
                 NavigationUtil.goToArtist(getActivity(), song.artistId);
                 return true;
-        }
+                }
         return false;
     }
 

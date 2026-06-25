@@ -236,12 +236,11 @@ public class CardPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_show_lyrics:
+                if (item.getItemId() == R.id.action_show_lyrics) {
                 if (lyrics != null)
                     LyricsDialog.create(lyrics).show(getFragmentManager(), "LYRICS");
                 return true;
-        }
+                }
         return super.onMenuItemClick(item);
     }
 
@@ -541,14 +540,13 @@ public class CardPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
 
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
-                    switch (item.getItemId()) {
-                        case R.id.action_remove_from_playing_queue:
+                                        if (item.getItemId() == R.id.action_remove_from_playing_queue) {
                             MusicPlayerRemote.removeFromQueue(MusicPlayerRemote.getPosition());
                             return true;
-                        case R.id.action_share:
+                                            } else if (item.getItemId() == R.id.action_share) {
                             SongShareDialog.create(getSong()).show(fragment.getFragmentManager(), "SONG_SHARE_DIALOG");
                             return true;
-                    }
+                                        }
                     return super.onMenuItemClick(item);
                 }
             });

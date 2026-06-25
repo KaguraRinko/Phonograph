@@ -318,29 +318,28 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         final List<Song> songs = songAdapter.getDataSet();
-        switch (id) {
-            case R.id.action_sleep_timer:
+                if (id == R.id.action_sleep_timer) {
                 new SleepTimerDialog().show(getSupportFragmentManager(), "SET_SLEEP_TIMER");
                 return true;
-            case R.id.action_equalizer:
+                    } else if (id == R.id.action_equalizer) {
                 NavigationUtil.openEqualizer(this);
                 return true;
-            case R.id.action_shuffle_artist:
+                    } else if (id == R.id.action_shuffle_artist) {
                 MusicPlayerRemote.openAndShuffleQueue(songs, true);
                 return true;
-            case R.id.action_play_next:
+                    } else if (id == R.id.action_play_next) {
                 MusicPlayerRemote.playNext(songs);
                 return true;
-            case R.id.action_add_to_current_playing:
+                    } else if (id == R.id.action_add_to_current_playing) {
                 MusicPlayerRemote.enqueue(songs);
                 return true;
-            case R.id.action_add_to_playlist:
+                    } else if (id == R.id.action_add_to_playlist) {
                 AddToPlaylistDialog.create(songs).show(getSupportFragmentManager(), "ADD_PLAYLIST");
                 return true;
-            case android.R.id.home:
+                    } else if (id == android.R.id.home) {
                 super.onBackPressed();
                 return true;
-            case R.id.action_biography:
+                    } else if (id == R.id.action_biography) {
                 if (biographyDialog == null) {
                     biographyDialog = new MaterialDialog.Builder(this)
                             .title(artist.getName())
@@ -359,20 +358,20 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
                     loadBiography();
                 }
                 return true;
-            case R.id.action_set_artist_image:
+                    } else if (id == R.id.action_set_artist_image) {
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setType("image/*");
                 startActivityForResult(Intent.createChooser(intent, getString(R.string.pick_from_local_storage)), REQUEST_CODE_SELECT_IMAGE);
                 return true;
-            case R.id.action_reset_artist_image:
+                    } else if (id == R.id.action_reset_artist_image) {
                 Toast.makeText(ArtistDetailActivity.this, getResources().getString(R.string.updating), Toast.LENGTH_SHORT).show();
                 CustomArtistImageUtil.getInstance(ArtistDetailActivity.this).resetCustomArtistImage(artist);
                 return true;
-            case R.id.action_colored_footers:
+                    } else if (id == R.id.action_colored_footers) {
                 item.setChecked(!item.isChecked());
                 setUsePalette(item.isChecked());
                 return true;
-        }
+                }
         return super.onOptionsItemSelected(item);
     }
 

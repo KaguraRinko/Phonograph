@@ -144,14 +144,13 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-        switch (id) {
-            case R.id.action_shuffle_playlist:
+                if (id == R.id.action_shuffle_playlist) {
                 MusicPlayerRemote.openAndShuffleQueue(adapter.getDataSet(), true);
                 return true;
-            case android.R.id.home:
+                    } else if (id == android.R.id.home) {
                 onBackPressed();
                 return true;
-        }
+                }
         return PlaylistMenuHelper.handleMenuClick(this, playlist, item);
     }
 

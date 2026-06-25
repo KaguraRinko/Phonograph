@@ -279,17 +279,16 @@ public class FoldersFragment extends AbsMainActivityFragment implements MainActi
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_go_to_start_directory:
+                if (item.getItemId() == R.id.action_go_to_start_directory) {
                 setCrumb(new BreadCrumbLayout.Crumb(FileUtil.safeGetCanonicalFile(PreferenceUtil.getInstance(getActivity()).getStartDirectory())), true);
                 return true;
-            case R.id.action_scan:
+                    } else if (item.getItemId() == R.id.action_scan) {
                 BreadCrumbLayout.Crumb crumb = getActiveCrumb();
                 if (crumb != null) {
                     new ArrayListPathsAsyncTask(getActivity(), this::scanPaths).execute(new ArrayListPathsAsyncTask.LoadingInfo(crumb.getFile(), AUDIO_FILE_FILTER));
                 }
                 return true;
-        }
+                }
         return super.onOptionsItemSelected(item);
     }
 
@@ -370,42 +369,28 @@ public class FoldersFragment extends AbsMainActivityFragment implements MainActi
             popupMenu.inflate(R.menu.menu_item_directory);
             popupMenu.setOnMenuItemClickListener(item -> {
                 final int itemId = item.getItemId();
-                switch (itemId) {
-                    case R.id.action_play_next:
-                    case R.id.action_add_to_current_playing:
-                    case R.id.action_add_to_playlist:
-                    case R.id.action_delete_from_device:
+                                if (itemId == R.id.action_play_next || itemId == R.id.action_add_to_current_playing || itemId == R.id.action_add_to_playlist || itemId == R.id.action_delete_from_device) {
                         new ListSongsAsyncTask(getActivity(), null, (songs, extra) -> {
                             if (!songs.isEmpty()) {
                                 SongsMenuHelper.handleMenuClick(getActivity(), songs, itemId);
                             }
                         }).execute(new ListSongsAsyncTask.LoadingInfo(toList(file), AUDIO_FILE_FILTER, getFileComparator()));
                         return true;
-                    case R.id.action_set_as_start_directory:
+                                    } else if (itemId == R.id.action_set_as_start_directory) {
                         PreferenceUtil.getInstance(getActivity()).setStartDirectory(file);
                         Toast.makeText(getActivity(), String.format(getString(R.string.new_start_directory), file.getPath()), Toast.LENGTH_SHORT).show();
                         return true;
-                    case R.id.action_scan:
+                                    } else if (itemId == R.id.action_scan) {
                         new ArrayListPathsAsyncTask(getActivity(), this::scanPaths).execute(new ArrayListPathsAsyncTask.LoadingInfo(file, AUDIO_FILE_FILTER));
                         return true;
-                }
+                                }
                 return false;
             });
         } else {
             popupMenu.inflate(R.menu.menu_item_file);
             popupMenu.setOnMenuItemClickListener(item -> {
                 final int itemId = item.getItemId();
-                switch (itemId) {
-                    case R.id.action_play_next:
-                    case R.id.action_add_to_current_playing:
-                    case R.id.action_add_to_playlist:
-                    case R.id.action_go_to_album:
-                    case R.id.action_go_to_artist:
-                    case R.id.action_share:
-                    case R.id.action_tag_editor:
-                    case R.id.action_details:
-                    case R.id.action_set_as_ringtone:
-                    case R.id.action_delete_from_device:
+                                if (itemId == R.id.action_play_next || itemId == R.id.action_add_to_current_playing || itemId == R.id.action_add_to_playlist || itemId == R.id.action_go_to_album || itemId == R.id.action_go_to_artist || itemId == R.id.action_share || itemId == R.id.action_tag_editor || itemId == R.id.action_details || itemId == R.id.action_set_as_ringtone || itemId == R.id.action_delete_from_device) {
                         new ListSongsAsyncTask(getActivity(), null, (songs, extra) -> {
                             if (!songs.isEmpty()) {
                                 SongMenuHelper.handleMenuClick(getActivity(), songs.get(0), itemId);
@@ -417,10 +402,10 @@ public class FoldersFragment extends AbsMainActivityFragment implements MainActi
                             }
                         }).execute(new ListSongsAsyncTask.LoadingInfo(toList(file), AUDIO_FILE_FILTER, getFileComparator()));
                         return true;
-                    case R.id.action_scan:
+                                    } else if (itemId == R.id.action_scan) {
                         scanPaths(new String[]{FileUtil.safeGetCanonicalPath(file)});
                         return true;
-                }
+                                }
                 return false;
             });
         }

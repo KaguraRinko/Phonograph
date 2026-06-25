@@ -29,29 +29,28 @@ import java.util.List;
  */
 public class PlaylistMenuHelper {
     public static boolean handleMenuClick(@NonNull AppCompatActivity activity, @NonNull final Playlist playlist, @NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_play:
+                if (item.getItemId() == R.id.action_play) {
                 MusicPlayerRemote.openQueue(new ArrayList<>(getPlaylistSongs(activity, playlist)), 0, true);
                 return true;
-            case R.id.action_play_next:
+                    } else if (item.getItemId() == R.id.action_play_next) {
                 MusicPlayerRemote.playNext(new ArrayList<>(getPlaylistSongs(activity, playlist)));
                 return true;
-            case R.id.action_add_to_current_playing:
+                    } else if (item.getItemId() == R.id.action_add_to_current_playing) {
                 MusicPlayerRemote.enqueue(new ArrayList<>(getPlaylistSongs(activity, playlist)));
                 return true;
-            case R.id.action_add_to_playlist:
+                    } else if (item.getItemId() == R.id.action_add_to_playlist) {
                 AddToPlaylistDialog.create(new ArrayList<>(getPlaylistSongs(activity, playlist))).show(activity.getSupportFragmentManager(), "ADD_PLAYLIST");
                 return true;
-            case R.id.action_rename_playlist:
+                    } else if (item.getItemId() == R.id.action_rename_playlist) {
                 RenamePlaylistDialog.create(playlist.id).show(activity.getSupportFragmentManager(), "RENAME_PLAYLIST");
                 return true;
-            case R.id.action_delete_playlist:
+                    } else if (item.getItemId() == R.id.action_delete_playlist) {
                 DeletePlaylistDialog.create(playlist).show(activity.getSupportFragmentManager(), "DELETE_PLAYLIST");
                 return true;
-            case R.id.action_save_playlist:
+                    } else if (item.getItemId() == R.id.action_save_playlist) {
                 new SavePlaylistAsyncTask(activity).execute(playlist);
                 return true;
-        }
+                }
         return false;
     }
 
