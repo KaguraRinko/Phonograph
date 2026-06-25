@@ -613,7 +613,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     }
 
     private boolean shouldRetryWithFfmpeg(@NonNull Song song) {
-        return playbackAttempt == PlaybackAttempt.NATIVE_RAW && !isRemoteSong(song);
+        return playbackAttempt == PlaybackAttempt.NATIVE_RAW;
     }
 
     private boolean openFfmpegTrack(@NonNull Song song) {
@@ -662,6 +662,12 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
             setBuffering(false);
             if (prepared) {
                 prepareNextImpl();
+            } else if (shouldRetryWithSubsonicTranscoding(song)) {
+                prepared = openTranscodedTrack(song);
+                setBuffering(false);
+                if (prepared) {
+                    prepareNextImpl();
+                }
             }
         }
         if (prepared) {
