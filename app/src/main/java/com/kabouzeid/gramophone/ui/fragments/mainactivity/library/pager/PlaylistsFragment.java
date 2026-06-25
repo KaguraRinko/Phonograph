@@ -11,12 +11,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.adapter.PlaylistAdapter;
 import com.kabouzeid.gramophone.interfaces.LoaderIds;
-import com.kabouzeid.gramophone.loader.PlaylistLoader;
 import com.kabouzeid.gramophone.misc.WrappedAsyncTaskLoader;
 import com.kabouzeid.gramophone.model.Playlist;
-import com.kabouzeid.gramophone.model.smartplaylist.HistoryPlaylist;
-import com.kabouzeid.gramophone.model.smartplaylist.LastAddedPlaylist;
-import com.kabouzeid.gramophone.model.smartplaylist.MyTopTracksPlaylist;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,21 +74,9 @@ public class PlaylistsFragment extends AbsLibraryPagerRecyclerViewFragment<Playl
             super(context);
         }
 
-        private static List<Playlist> getAllPlaylists(Context context) {
-            List<Playlist> playlists = new ArrayList<>();
-
-            playlists.add(new LastAddedPlaylist(context));
-            playlists.add(new HistoryPlaylist(context));
-            playlists.add(new MyTopTracksPlaylist(context));
-
-            playlists.addAll(PlaylistLoader.getAllPlaylists(context));
-
-            return playlists;
-        }
-
         @Override
         public List<Playlist> loadInBackground() {
-            return getAllPlaylists(getContext());
+            return MediaSourceManager.getCurrentRepository(getContext()).getAllPlaylists(getContext());
         }
     }
 }

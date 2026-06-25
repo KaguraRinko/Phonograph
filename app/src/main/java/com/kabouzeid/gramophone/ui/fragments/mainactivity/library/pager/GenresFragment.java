@@ -10,9 +10,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.adapter.GenreAdapter;
 import com.kabouzeid.gramophone.interfaces.LoaderIds;
-import com.kabouzeid.gramophone.loader.GenreLoader;
 import com.kabouzeid.gramophone.misc.WrappedAsyncTaskLoader;
 import com.kabouzeid.gramophone.model.Genre;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +73,7 @@ public class GenresFragment extends AbsLibraryPagerRecyclerViewFragment<GenreAda
 
         @Override
         public List<Genre> loadInBackground() {
-            return GenreLoader.getAllGenres(getContext());
+            return MediaSourceManager.getCurrentRepository(getContext()).getAllGenres(getContext());
         }
     }
 }

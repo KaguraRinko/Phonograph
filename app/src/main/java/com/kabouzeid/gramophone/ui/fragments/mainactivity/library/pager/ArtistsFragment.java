@@ -10,9 +10,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.adapter.artist.ArtistAdapter;
 import com.kabouzeid.gramophone.interfaces.LoaderIds;
-import com.kabouzeid.gramophone.loader.ArtistLoader;
 import com.kabouzeid.gramophone.misc.WrappedAsyncTaskLoader;
 import com.kabouzeid.gramophone.model.Artist;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.util.PreferenceUtil;
 
 import java.util.ArrayList;
@@ -142,7 +142,7 @@ public class ArtistsFragment extends AbsLibraryPagerRecyclerViewCustomGridSizeFr
 
         @Override
         public List<Artist> loadInBackground() {
-            return ArtistLoader.getAllArtists(getContext());
+            return MediaSourceManager.getCurrentRepository(getContext()).getAllArtists(getContext());
         }
     }
 }

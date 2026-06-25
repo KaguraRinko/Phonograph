@@ -10,9 +10,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.adapter.album.AlbumAdapter;
 import com.kabouzeid.gramophone.interfaces.LoaderIds;
-import com.kabouzeid.gramophone.loader.AlbumLoader;
 import com.kabouzeid.gramophone.misc.WrappedAsyncTaskLoader;
 import com.kabouzeid.gramophone.model.Album;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.util.PreferenceUtil;
 
 import java.util.ArrayList;
@@ -138,7 +138,7 @@ public class AlbumsFragment extends AbsLibraryPagerRecyclerViewCustomGridSizeFra
 
         @Override
         public List<Album> loadInBackground() {
-            return AlbumLoader.getAllAlbums(getContext());
+            return MediaSourceManager.getCurrentRepository(getContext()).getAllAlbums(getContext());
         }
     }
 }

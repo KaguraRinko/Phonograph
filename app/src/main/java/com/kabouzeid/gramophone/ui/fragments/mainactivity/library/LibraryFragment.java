@@ -31,7 +31,7 @@ import com.kabouzeid.gramophone.dialogs.CreatePlaylistDialog;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
 import com.kabouzeid.gramophone.helper.SortOrder;
 import com.kabouzeid.gramophone.interfaces.CabHolder;
-import com.kabouzeid.gramophone.loader.SongLoader;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.ui.activities.MainActivity;
 import com.kabouzeid.gramophone.ui.activities.SearchActivity;
 import com.kabouzeid.gramophone.ui.fragments.mainactivity.AbsMainActivityFragment;
@@ -235,7 +235,7 @@ public class LibraryFragment extends AbsMainActivityFragment implements CabHolde
 
         int id = item.getItemId();
                 if (id == R.id.action_shuffle_all) {
-                MusicPlayerRemote.openAndShuffleQueue(SongLoader.getAllSongs(getActivity()), true);
+                MusicPlayerRemote.openAndShuffleQueue(MediaSourceManager.getCurrentRepository(getActivity()).getAllSongs(getActivity()), true);
                 return true;
                     } else if (id == R.id.action_new_playlist) {
                 CreatePlaylistDialog.create().show(getChildFragmentManager(), "CREATE_PLAYLIST");
