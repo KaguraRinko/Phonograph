@@ -19,7 +19,8 @@ import com.kabouzeid.gramophone.util.PreferenceUtil;
 /**
  * @author Andrew Neal, Karim Abou Zeid (kabouzeid)
  */
-public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
+public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener,
+        MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnInfoListener {
     public static final String TAG = MultiPlayer.class.getSimpleName();
 
     private MediaPlayer mCurrentMediaPlayer = new MediaPlayer();
@@ -30,6 +31,7 @@ public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, Media
     private Playback.PlaybackCallbacks callbacks;
 
     private boolean mIsInitialized = false;
+    private int mBufferedPercent = 100;
 
     /**
      * Constructor of <code>MultiPlayer</code>
@@ -48,6 +50,7 @@ public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, Media
     @Override
     public boolean setDataSource(@NonNull final String path) {
         mIsInitialized = false;
+        mBufferedPercent = isRemotePath(path) ? 0 : 100;
         mIsInitialized = setDataSourceImpl(mCurrentMediaPlayer, path);
         if (mIsInitialized) {
             setNextDataSource(null);
@@ -69,6 +72,8 @@ public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, Media
         try {
             player.reset();
             player.setOnPreparedListener(null);
+            player.setOnBufferingUpdateListener(player == mCurrentMediaPlayer ? this : null);
+            player.setOnInfoListener(player == mCurrentMediaPlayer ? this : null);
             if (path.startsWith("content://")) {
                 player.setDataSource(context, Uri.parse(path));
             } else {
@@ -87,6 +92,10 @@ public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, Media
         intent.putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC);
         context.sendBroadcast(intent);
         return true;
+    }
+
+    private boolean isRemotePath(@NonNull String path) {
+        return path.startsWith("http://") || path.startsWith("https://");
     }
 
     /**
@@ -245,6 +254,15 @@ public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, Media
         }
     }
 
+    @Override
+    public int bufferedPosition() {
+        int duration = duration();
+        if (duration <= 0) {
+            return -1;
+        }
+        return Math.round(duration * (mBufferedPercent / 100f));
+    }
+
     /**
      * Gets the current playback position.
      *
@@ -302,6 +320,10 @@ public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, Media
     @Override
     public boolean onError(final MediaPlayer mp, final int what, final int extra) {
         mIsInitialized = false;
+        mBufferedPercent = 0;
+        if (callbacks != null) {
+            callbacks.onBufferingEnded();
+        }
         mCurrentMediaPlayer.release();
         mCurrentMediaPlayer = new MediaPlayer();
         mCurrentMediaPlayer.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
@@ -320,7 +342,10 @@ public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, Media
             mIsInitialized = false;
             mCurrentMediaPlayer.release();
             mCurrentMediaPlayer = mNextMediaPlayer;
+            mCurrentMediaPlayer.setOnBufferingUpdateListener(this);
+            mCurrentMediaPlayer.setOnInfoListener(this);
             mIsInitialized = true;
+            mBufferedPercent = 100;
             mNextMediaPlayer = null;
             if (callbacks != null)
                 callbacks.onTrackWentToNext();
@@ -328,5 +353,28 @@ public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, Media
             if (callbacks != null)
                 callbacks.onTrackEnded();
         }
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+        if (mp == mCurrentMediaPlayer) {
+            mBufferedPercent = Math.max(0, Math.min(100, percent));
+            if (callbacks != null) {
+                callbacks.onBufferingProgressChanged(mBufferedPercent);
+            }
+        }
+    }
+
+    @Override
+    public boolean onInfo(MediaPlayer mp, int what, int extra) {
+        if (mp != mCurrentMediaPlayer || callbacks == null) {
+            return false;
+        }
+        if (what == MediaPlayer.MEDIA_INFO_BUFFERING_START) {
+            callbacks.onBufferingStarted();
+        } else if (what == MediaPlayer.MEDIA_INFO_BUFFERING_END) {
+            callbacks.onBufferingEnded();
+        }
+        return false;
     }
 }

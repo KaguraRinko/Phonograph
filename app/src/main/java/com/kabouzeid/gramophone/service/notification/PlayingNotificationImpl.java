@@ -42,6 +42,7 @@ public class PlayingNotificationImpl extends PlayingNotification {
         final Song song = service.getCurrentSong();
 
         final boolean isPlaying = service.isPlaying();
+        final boolean isBuffering = service.isBuffering();
 
         final RemoteViews notificationLayout = new RemoteViews(service.getPackageName(), R.layout.notification);
         final RemoteViews notificationLayoutBig = new RemoteViews(service.getPackageName(), R.layout.notification_big);
@@ -79,7 +80,7 @@ public class PlayingNotificationImpl extends PlayingNotification {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setContent(notificationLayout)
                 .setCustomBigContentView(notificationLayoutBig)
-                .setOngoing(isPlaying)
+                .setOngoing(isPlaying || isBuffering)
                 .build();
 
         final int bigNotificationImageSize = service.getResources().getDimensionPixelSize(R.dimen.notification_big_image_size);
@@ -135,7 +136,10 @@ public class PlayingNotificationImpl extends PlayingNotification {
 
                                 Bitmap prev = ImageUtil.createBitmap(ImageUtil.getTintedVectorDrawable(service, R.drawable.ic_skip_previous_white_24dp, primary), 1.5f);
                                 Bitmap next = ImageUtil.createBitmap(ImageUtil.getTintedVectorDrawable(service, R.drawable.ic_skip_next_white_24dp, primary), 1.5f);
-                                Bitmap playPause = ImageUtil.createBitmap(ImageUtil.getTintedVectorDrawable(service, isPlaying ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp, primary), 1.5f);
+                                Bitmap playPause = ImageUtil.createBitmap(ImageUtil.getTintedVectorDrawable(service,
+                                        isBuffering ? R.drawable.ic_sync_white_24dp
+                                                : isPlaying ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp,
+                                        primary), 1.5f);
 
                                 notificationLayout.setTextColor(R.id.title, primary);
                                 notificationLayout.setTextColor(R.id.text, secondary);

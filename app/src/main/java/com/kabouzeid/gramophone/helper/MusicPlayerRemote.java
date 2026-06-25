@@ -166,6 +166,10 @@ public class MusicPlayerRemote {
         return musicService != null && musicService.isPlaying();
     }
 
+    public static boolean isBuffering() {
+        return musicService != null && musicService.isBuffering();
+    }
+
     public static void resumePlaying() {
         if (musicService != null) {
             musicService.play();
@@ -242,6 +246,13 @@ public class MusicPlayerRemote {
     public static int getSongDurationMillis() {
         if (musicService != null) {
             return musicService.getSongDurationMillis();
+        }
+        return -1;
+    }
+
+    public static int getBufferedPositionMillis() {
+        if (musicService != null) {
+            return musicService.getBufferedPositionMillis();
         }
         return -1;
     }

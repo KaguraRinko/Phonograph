@@ -83,6 +83,7 @@ public abstract class AbsMusicServiceActivity extends AbsBaseActivity implements
 
             final IntentFilter filter = new IntentFilter();
             filter.addAction(MusicService.PLAY_STATE_CHANGED);
+            filter.addAction(MusicService.BUFFERING_CHANGED);
             filter.addAction(MusicService.SHUFFLE_MODE_CHANGED);
             filter.addAction(MusicService.REPEAT_MODE_CHANGED);
             filter.addAction(MusicService.META_CHANGED);
@@ -147,6 +148,15 @@ public abstract class AbsMusicServiceActivity extends AbsBaseActivity implements
     }
 
     @Override
+    public void onBufferingStateChanged() {
+        for (MusicServiceEventListener listener : mMusicServiceEventListeners) {
+            if (listener != null) {
+                listener.onBufferingStateChanged();
+            }
+        }
+    }
+
+    @Override
     public void onMediaStoreChanged() {
         for (MusicServiceEventListener listener : mMusicServiceEventListeners) {
             if (listener != null) {
@@ -195,6 +205,9 @@ public abstract class AbsMusicServiceActivity extends AbsBaseActivity implements
                         break;
                     case MusicService.PLAY_STATE_CHANGED:
                         activity.onPlayStateChanged();
+                        break;
+                    case MusicService.BUFFERING_CHANGED:
+                        activity.onBufferingStateChanged();
                         break;
                     case MusicService.REPEAT_MODE_CHANGED:
                         activity.onRepeatModeChanged();

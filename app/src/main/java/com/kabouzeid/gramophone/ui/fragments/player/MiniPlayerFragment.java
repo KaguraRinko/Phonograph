@@ -36,6 +36,7 @@ public class MiniPlayerFragment extends AbsMusicServiceFragment implements Music
     MaterialProgressBar progressBar;
 
     private PlayPauseDrawable miniPlayerPlayPauseDrawable;
+    private boolean showingBufferingIcon;
 
     private MusicProgressViewUpdateHelper progressViewUpdateHelper;
 
@@ -87,6 +88,7 @@ public class MiniPlayerFragment extends AbsMusicServiceFragment implements Music
     public void onServiceConnected() {
         updateSongTitle();
         updatePlayPauseDrawableState(false);
+        onUpdateProgressViews(MusicPlayerRemote.getSongProgressMillis(), MusicPlayerRemote.getSongDurationMillis());
     }
 
     @Override
@@ -100,9 +102,17 @@ public class MiniPlayerFragment extends AbsMusicServiceFragment implements Music
     }
 
     @Override
+    public void onBufferingStateChanged() {
+        updatePlayPauseDrawableState(true);
+        onUpdateProgressViews(MusicPlayerRemote.getSongProgressMillis(), MusicPlayerRemote.getSongDurationMillis());
+    }
+
+    @Override
     public void onUpdateProgressViews(int progress, int total) {
-        progressBar.setMax(total);
-        progressBar.setProgress(progress);
+        int safeTotal = Math.max(total, 0);
+        progressBar.setMax(safeTotal);
+        progressBar.setProgress(Math.max(progress, 0));
+        progressBar.setSecondaryProgress(Math.max(MusicPlayerRemote.getBufferedPositionMillis(), 0));
     }
 
     @Override
@@ -146,6 +156,19 @@ public class MiniPlayerFragment extends AbsMusicServiceFragment implements Music
     }
 
     protected void updatePlayPauseDrawableState(boolean animate) {
+        if (MusicPlayerRemote.isBuffering()) {
+            if (!showingBufferingIcon) {
+                miniPlayerPlayPauseButton.setImageResource(R.drawable.ic_sync_white_24dp);
+                miniPlayerPlayPauseButton.setColorFilter(ATHUtil.resolveColor(getActivity(), R.attr.iconColor, ThemeStore.textColorSecondary(getActivity())), PorterDuff.Mode.SRC_IN);
+                showingBufferingIcon = true;
+            }
+        } else {
+            if (showingBufferingIcon) {
+                miniPlayerPlayPauseButton.setImageDrawable(miniPlayerPlayPauseDrawable);
+                miniPlayerPlayPauseButton.setColorFilter(ATHUtil.resolveColor(getActivity(), R.attr.iconColor, ThemeStore.textColorSecondary(getActivity())), PorterDuff.Mode.SRC_IN);
+                showingBufferingIcon = false;
+            }
+        }
         if (MusicPlayerRemote.isPlaying()) {
             miniPlayerPlayPauseDrawable.setPause(animate);
         } else {

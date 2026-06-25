@@ -38,9 +38,11 @@ public class PlayingNotificationImpl24 extends PlayingNotification {
         final Song song = service.getCurrentSong();
 
         final boolean isPlaying = service.isPlaying();
+        final boolean isBuffering = service.isBuffering();
 
-        final int playButtonResId = isPlaying
-                ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp;
+        final int playButtonResId = isBuffering
+                ? R.drawable.ic_sync_white_24dp
+                : isPlaying ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp;
 
         Intent action = new Intent(service, MainActivity.class);
         action.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -87,7 +89,7 @@ public class PlayingNotificationImpl24 extends PlayingNotification {
                                 .setDeleteIntent(deleteIntent)
                                 .setContentTitle(song.title)
                                 .setContentText(song.artistName)
-                                .setOngoing(isPlaying)
+                                .setOngoing(isPlaying || isBuffering)
                                 .setShowWhen(false)
                                 .addAction(previousAction)
                                 .addAction(playPauseAction)

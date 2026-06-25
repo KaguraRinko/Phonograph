@@ -14,6 +14,8 @@ public interface MusicServiceEventListener {
 
     void onPlayStateChanged();
 
+    void onBufferingStateChanged();
+
     void onRepeatModeChanged();
 
     void onShuffleModeChanged();

@@ -69,6 +69,11 @@ public class AbsMusicServiceFragment extends Fragment implements MusicServiceEve
     }
 
     @Override
+    public void onBufferingStateChanged() {
+
+    }
+
+    @Override
     public void onRepeatModeChanged() {
 
     }

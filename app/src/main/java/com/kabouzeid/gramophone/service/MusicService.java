@@ -99,6 +99,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     public static final String META_CHANGED = PHONOGRAPH_PACKAGE_NAME + ".metachanged";
     public static final String QUEUE_CHANGED = PHONOGRAPH_PACKAGE_NAME + ".queuechanged";
     public static final String PLAY_STATE_CHANGED = PHONOGRAPH_PACKAGE_NAME + ".playstatechanged";
+    public static final String BUFFERING_CHANGED = PHONOGRAPH_PACKAGE_NAME + ".bufferingchanged";
 
     public static final String REPEAT_MODE_CHANGED = PHONOGRAPH_PACKAGE_NAME + ".repeatmodechanged";
     public static final String SHUFFLE_MODE_CHANGED = PHONOGRAPH_PACKAGE_NAME + ".shufflemodechanged";
@@ -176,6 +177,8 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     };
     private ContentObserver mediaStoreObserver;
     private boolean notHandledMetaChangedForCurrentTrack;
+    private boolean buffering;
+    private int bufferedProgressPercent = 100;
 
     private Handler uiThreadHandler;
 
@@ -519,6 +522,10 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         return playback != null && playback.isPlaying();
     }
 
+    public boolean isBuffering() {
+        return buffering;
+    }
+
     public int getPosition() {
         return position;
     }
@@ -540,12 +547,23 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
 
     private boolean openCurrent() {
         synchronized (this) {
+            Song song = getCurrentSong();
+            boolean remoteSong = isRemoteSong(song);
+            updateBufferedProgressPercent(remoteSong ? 0 : 100);
+            setBuffering(remoteSong);
             try {
-                return playback.setDataSource(getTrackUri(getCurrentSong()));
+                boolean prepared = playback.setDataSource(getTrackUri(song));
+                setBuffering(false);
+                return prepared;
             } catch (Exception e) {
+                setBuffering(false);
                 return false;
             }
         }
+    }
+
+    private boolean isRemoteSong(@NonNull Song song) {
+        return SubsonicUri.isSubsonicUri(song.data);
     }
 
     private void prepareNext() {
@@ -596,7 +614,8 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         mediaSession.setPlaybackState(
                 new PlaybackStateCompat.Builder()
                         .setActions(MEDIA_SESSION_ACTIONS)
-                        .setState(isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED,
+                        .setState(isBuffering() ? PlaybackStateCompat.STATE_BUFFERING
+                                        : isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED,
                                 getSongProgressMillis(), 1)
                         .build());
     }
@@ -975,6 +994,17 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         return playback.duration();
     }
 
+    public int getBufferedPositionMillis() {
+        if (bufferedProgressPercent >= 100) {
+            return getSongDurationMillis();
+        }
+        return playback.bufferedPosition();
+    }
+
+    public int getBufferedProgressPercent() {
+        return bufferedProgressPercent;
+    }
+
     public long getQueueDurationMillis(int position) {
         long duration = 0;
         for (int i = position + 1; i < playingQueue.size(); i++)
@@ -1106,6 +1136,10 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
                 }
                 songPlayCountHelper.notifyPlayStateChanged(isPlaying);
                 break;
+            case BUFFERING_CHANGED:
+                updateNotification();
+                updateMediaSessionPlaybackState();
+                break;
             case META_CHANGED:
                 updateNotification();
                 updateMediaSessionMetaData();
@@ -1136,6 +1170,23 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
 
     public MediaSessionCompat getMediaSession() {
         return mediaSession;
+    }
+
+    private void setBuffering(boolean buffering) {
+        if (this.buffering == buffering) {
+            return;
+        }
+        this.buffering = buffering;
+        handleAndSendChangeInternal(BUFFERING_CHANGED);
+    }
+
+    private void updateBufferedProgressPercent(int percent) {
+        int clampedPercent = Math.max(0, Math.min(100, percent));
+        if (bufferedProgressPercent == clampedPercent) {
+            return;
+        }
+        bufferedProgressPercent = clampedPercent;
+        sendChangeInternal(BUFFERING_CHANGED);
     }
 
     public void releaseWakeLock() {
@@ -1181,6 +1232,21 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     public void onTrackEnded() {
         acquireWakeLock(30000);
         playerHandler.sendEmptyMessage(TRACK_ENDED);
+    }
+
+    @Override
+    public void onBufferingStarted() {
+        setBuffering(true);
+    }
+
+    @Override
+    public void onBufferingEnded() {
+        setBuffering(false);
+    }
+
+    @Override
+    public void onBufferingProgressChanged(int percent) {
+        updateBufferedProgressPercent(percent);
     }
 
     private static final class PlaybackHandler extends Handler {

@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -48,6 +47,7 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
     TextView songCurrentProgress;
 
     private PlayPauseDrawable playPauseDrawable;
+    private boolean showingBufferingIcon;
 
     private int lastPlaybackControlsColor;
     private int lastDisabledPlaybackControlsColor;
@@ -106,11 +106,18 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
         updatePlayPauseDrawableState(false);
         updateRepeatState();
         updateShuffleState();
+        onUpdateProgressViews(MusicPlayerRemote.getSongProgressMillis(), MusicPlayerRemote.getSongDurationMillis());
     }
 
     @Override
     public void onPlayStateChanged() {
         updatePlayPauseDrawableState(true);
+    }
+
+    @Override
+    public void onBufferingStateChanged() {
+        updatePlayPauseDrawableState(true);
+        onUpdateProgressViews(MusicPlayerRemote.getSongProgressMillis(), MusicPlayerRemote.getSongDurationMillis());
     }
 
     @Override
@@ -153,6 +160,17 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
     }
 
     protected void updatePlayPauseDrawableState(boolean animate) {
+        if (MusicPlayerRemote.isBuffering()) {
+            if (!showingBufferingIcon) {
+                playPauseButton.setImageResource(R.drawable.ic_sync_white_24dp);
+                updatePlayPauseColor();
+                showingBufferingIcon = true;
+            }
+        } else if (showingBufferingIcon) {
+            playPauseButton.setImageDrawable(playPauseDrawable);
+            updatePlayPauseColor();
+            showingBufferingIcon = false;
+        }
         if (MusicPlayerRemote.isPlaying()) {
             playPauseDrawable.setPause(animate);
         } else {
@@ -287,7 +305,6 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
     private void setUpProgressSlider() {
         int color = MaterialValueHelper.getPrimaryTextColor(getContext(), false);
         progressSlider.getThumb().mutate().setColorFilter(color, PorterDuff.Mode.SRC_IN);
-        progressSlider.getProgressDrawable().mutate().setColorFilter(Color.TRANSPARENT, PorterDuff.Mode.SRC_IN);
 
         progressSlider.setOnSeekBarChangeListener(new SimpleOnSeekbarChangeListener() {
             @Override
@@ -302,9 +319,12 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
 
     @Override
     public void onUpdateProgressViews(int progress, int total) {
-        progressSlider.setMax(total);
-        progressSlider.setProgress(progress);
-        songTotalTime.setText(MusicUtil.getReadableDurationString(total));
-        songCurrentProgress.setText(MusicUtil.getReadableDurationString(progress));
+        int safeTotal = Math.max(total, 0);
+        int safeProgress = Math.max(progress, 0);
+        progressSlider.setMax(safeTotal);
+        progressSlider.setProgress(safeProgress);
+        progressSlider.setSecondaryProgress(Math.max(MusicPlayerRemote.getBufferedPositionMillis(), 0));
+        songTotalTime.setText(MusicUtil.getReadableDurationString(safeTotal));
+        songCurrentProgress.setText(MusicUtil.getReadableDurationString(safeProgress));
     }
 }

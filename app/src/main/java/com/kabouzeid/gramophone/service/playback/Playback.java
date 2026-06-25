@@ -29,6 +29,8 @@ public interface Playback {
 
     int position();
 
+    int bufferedPosition();
+
     int seek(int whereto);
 
     boolean setVolume(float vol);
@@ -41,5 +43,11 @@ public interface Playback {
         void onTrackWentToNext();
 
         void onTrackEnded();
+
+        void onBufferingStarted();
+
+        void onBufferingEnded();
+
+        void onBufferingProgressChanged(int percent);
     }
 }

@@ -43,7 +43,7 @@ public abstract class PlayingNotification {
 
     void updateNotifyModeAndPostNotification(Notification notification) {
         int newNotifyMode;
-        if (service.isPlaying()) {
+        if (service.isPlaying() || service.isBuffering()) {
             newNotifyMode = NOTIFY_MODE_FOREGROUND;
         } else {
             newNotifyMode = NOTIFY_MODE_BACKGROUND;
