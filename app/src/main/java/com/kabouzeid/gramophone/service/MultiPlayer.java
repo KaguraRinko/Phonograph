@@ -327,10 +327,11 @@ public class MultiPlayer implements Playback, MediaPlayer.OnErrorListener, Media
         mCurrentMediaPlayer.release();
         mCurrentMediaPlayer = new MediaPlayer();
         mCurrentMediaPlayer.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
-        if (context != null) {
+        boolean handled = callbacks != null && callbacks.onPlaybackError();
+        if (!handled && context != null) {
             Toast.makeText(context, context.getResources().getString(R.string.unplayable_file), Toast.LENGTH_SHORT).show();
         }
-        return false;
+        return handled;
     }
 
     /**

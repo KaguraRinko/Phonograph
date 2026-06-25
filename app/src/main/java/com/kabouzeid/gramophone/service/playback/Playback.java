@@ -44,6 +44,8 @@ public interface Playback {
 
         void onTrackEnded();
 
+        boolean onPlaybackError();
+
         void onBufferingStarted();
 
         void onBufferingEnded();

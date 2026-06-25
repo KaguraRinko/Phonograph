@@ -122,6 +122,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     private static final int DUCK = 7;
     private static final int UNDUCK = 8;
     public static final int RESTORE_QUEUES = 9;
+    private static final int RETRY_CURRENT_WITH_TRANSCODING = 10;
 
     public static final int SHUFFLE_MODE_NONE = 0;
     public static final int SHUFFLE_MODE_SHUFFLE = 1;
@@ -561,17 +562,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
             } catch (Exception ignored) {
             }
             if (!prepared && shouldRetryWithSubsonicTranscoding(song)) {
-                String transcodedTrackUri = getTranscodedTrackUri(song);
-                if (transcodedTrackUri != null) {
-                    updateBufferedProgressPercent(0);
-                    setBuffering(true);
-                    try {
-                        prepared = playback.setDataSource(transcodedTrackUri);
-                        currentTrackTranscoded = prepared;
-                    } catch (Exception ignored) {
-                        currentTrackTranscoded = false;
-                    }
-                }
+                prepared = openTranscodedTrack(song);
             }
             setBuffering(false);
             return prepared;
@@ -583,7 +574,47 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     }
 
     private boolean shouldRetryWithSubsonicTranscoding(@NonNull Song song) {
-        return isRemoteSong(song) && PreferenceUtil.getInstance(this).subsonicTranscodingEnabled();
+        return !currentTrackTranscoded
+                && isRemoteSong(song)
+                && PreferenceUtil.getInstance(this).subsonicTranscodingEnabled();
+    }
+
+    private boolean openTranscodedTrack(@NonNull Song song) {
+        String transcodedTrackUri = getTranscodedTrackUri(song);
+        if (transcodedTrackUri == null) {
+            return false;
+        }
+        updateBufferedProgressPercent(0);
+        setBuffering(true);
+        try {
+            boolean prepared = playback.setDataSource(transcodedTrackUri);
+            currentTrackTranscoded = prepared;
+            return prepared;
+        } catch (Exception ignored) {
+            currentTrackTranscoded = false;
+            return false;
+        }
+    }
+
+    private void retryCurrentWithSubsonicTranscoding() {
+        boolean prepared;
+        synchronized (this) {
+            Song song = getCurrentSong();
+            if (!shouldRetryWithSubsonicTranscoding(song)) {
+                Toast.makeText(this, getResources().getString(R.string.unplayable_file), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            prepared = openTranscodedTrack(song);
+            setBuffering(false);
+            if (prepared) {
+                prepareNextImpl();
+            }
+        }
+        if (prepared) {
+            play();
+        } else {
+            Toast.makeText(this, getResources().getString(R.string.unplayable_file), Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Nullable
@@ -1294,6 +1325,16 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     }
 
     @Override
+    public boolean onPlaybackError() {
+        if (!shouldRetryWithSubsonicTranscoding(getCurrentSong())) {
+            return false;
+        }
+        playerHandler.removeMessages(RETRY_CURRENT_WITH_TRANSCODING);
+        playerHandler.sendEmptyMessage(RETRY_CURRENT_WITH_TRANSCODING);
+        return true;
+    }
+
+    @Override
     public void onBufferingStarted() {
         setBuffering(true);
     }
@@ -1406,6 +1447,10 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
 
                 case RESTORE_QUEUES:
                     service.restoreQueuesAndPositionIfNecessary();
+                    break;
+
+                case RETRY_CURRENT_WITH_TRANSCODING:
+                    service.retryCurrentWithSubsonicTranscoding();
                     break;
 
                 case FOCUS_CHANGE:
