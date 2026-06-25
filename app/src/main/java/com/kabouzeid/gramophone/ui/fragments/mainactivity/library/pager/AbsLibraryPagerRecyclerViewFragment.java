@@ -36,7 +36,7 @@ public abstract class AbsLibraryPagerRecyclerViewFragment<A extends RecyclerView
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(getLayoutRes(), container, false);
-        container = view.findViewById(R.id.container);
+        this.container = view.findViewById(R.id.container);
         recyclerView = view.findViewById(R.id.recycler_view);
         empty = view.findViewById(android.R.id.empty);
         return view;
@@ -101,6 +101,7 @@ public abstract class AbsLibraryPagerRecyclerViewFragment<A extends RecyclerView
 
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int i) {
+        if (container == null) return;
         container.setPadding(container.getPaddingLeft(), container.getPaddingTop(), container.getPaddingRight(), getLibraryFragment().getTotalAppBarScrollingRange() + i);
     }
 

@@ -140,7 +140,7 @@ public class FoldersFragment extends AbsMainActivityFragment implements MainActi
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_folder, container, false);
         coordinatorLayout = view.findViewById(R.id.coordinator_layout);
-        container = view.findViewById(R.id.container);
+        this.container = view.findViewById(R.id.container);
         empty = view.findViewById(android.R.id.empty);
         toolbar = view.findViewById(R.id.toolbar);
         breadCrumbs = view.findViewById(R.id.bread_crumbs);
@@ -414,6 +414,7 @@ public class FoldersFragment extends AbsMainActivityFragment implements MainActi
 
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+        if (container == null) return;
         container.setPadding(container.getPaddingLeft(), container.getPaddingTop(), container.getPaddingRight(), appbar.getTotalScrollRange() + verticalOffset);
     }
 
