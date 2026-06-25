@@ -30,20 +30,9 @@ import static com.kabouzeid.gramophone.service.MusicService.ACTION_SKIP;
 import static com.kabouzeid.gramophone.service.MusicService.ACTION_TOGGLE_PAUSE;
 
 public class PlayingNotificationImpl24 extends PlayingNotification {
-    private final PlayingNotificationImpl bufferingNotification = new PlayingNotificationImpl();
-
-    @Override
-    public synchronized void init(MusicService service) {
-        super.init(service);
-        bufferingNotification.init(service);
-    }
 
     @Override
     public synchronized void update() {
-        if (service.isBuffering()) {
-            bufferingNotification.update();
-            return;
-        }
         stopped = false;
 
         final Song song = service.getCurrentSong();
@@ -115,12 +104,6 @@ public class PlayingNotificationImpl24 extends PlayingNotification {
                         updateNotifyModeAndPostNotification(builder.build());
                     }
                 }));
-    }
-
-    @Override
-    public synchronized void stop() {
-        bufferingNotification.stop();
-        super.stop();
     }
 
     private PendingIntent retrievePlaybackAction(final String action) {
