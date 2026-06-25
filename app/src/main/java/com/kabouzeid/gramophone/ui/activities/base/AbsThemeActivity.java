@@ -6,6 +6,7 @@ import android.os.Bundle;
 import androidx.annotation.ColorInt;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import android.view.View;
 import android.view.ViewGroup;
@@ -64,16 +65,16 @@ public abstract class AbsThemeActivity extends ATHToolbarActivity {
         final int initialRight = content.getPaddingRight();
         final int initialBottom = content.getPaddingBottom();
         ViewCompat.setOnApplyWindowInsetsListener(content, (view, windowInsets) -> {
-            Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets statusBars = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
             View statusBar = findViewById(R.id.status_bar);
-            if (statusBar != null && systemBars.top > 0) {
+            if (statusBar != null && statusBars.top > 0) {
                 ViewGroup.LayoutParams layoutParams = statusBar.getLayoutParams();
-                if (layoutParams.height != systemBars.top) {
-                    layoutParams.height = systemBars.top;
+                if (layoutParams.height != statusBars.top) {
+                    layoutParams.height = statusBars.top;
                     statusBar.setLayoutParams(layoutParams);
                 }
             }
-            view.setPadding(initialLeft, initialTop, initialRight, initialBottom + systemBars.bottom);
+            view.setPadding(initialLeft, initialTop, initialRight, initialBottom);
             return windowInsets;
         });
         ViewCompat.requestApplyInsets(content);
@@ -151,6 +152,7 @@ public abstract class AbsThemeActivity extends ATHToolbarActivity {
             return;
         }
 
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().setNavigationBarColor(Color.TRANSPARENT);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             getWindow().setNavigationBarContrastEnforced(false);
