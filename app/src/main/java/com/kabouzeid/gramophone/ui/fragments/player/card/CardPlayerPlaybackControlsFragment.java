@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -38,6 +39,7 @@ public class CardPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
     ImageButton nextButton;
     ImageButton repeatButton;
     ImageButton shuffleButton;
+    ProgressBar bufferingProgress;
 
     SeekBar progressSlider;
     TextView songTotalTime;
@@ -70,6 +72,7 @@ public class CardPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
         nextButton = view.findViewById(R.id.player_next_button);
         repeatButton = view.findViewById(R.id.player_repeat_button);
         shuffleButton = view.findViewById(R.id.player_shuffle_button);
+        bufferingProgress = view.findViewById(R.id.player_buffering_progress);
         progressSlider = view.findViewById(R.id.player_progress_slider);
         songTotalTime = view.findViewById(R.id.player_song_total_time);
         songCurrentProgress = view.findViewById(R.id.player_song_current_progress);
@@ -146,7 +149,9 @@ public class CardPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
 
         playPauseFab.setImageDrawable(playerFabPlayPauseDrawable); // Note: set the drawable AFTER TintHelper.setTintAuto() was called
         playPauseFab.setColorFilter(MaterialValueHelper.getPrimaryTextColor(getContext(), ColorUtil.isColorLight(fabColor)), PorterDuff.Mode.SRC_IN);
-        playPauseFab.setOnClickListener(new PlayPauseButtonOnClickHandler());
+        PlayPauseButtonOnClickHandler clickHandler = new PlayPauseButtonOnClickHandler();
+        playPauseFab.setOnClickListener(clickHandler);
+        bufferingProgress.setOnClickListener(clickHandler);
         playPauseFab.post(() -> {
             if (playPauseFab != null) {
                 playPauseFab.setPivotX(playPauseFab.getWidth() / 2);
@@ -158,10 +163,12 @@ public class CardPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
     protected void updatePlayPauseDrawableState(boolean animate) {
         if (MusicPlayerRemote.isBuffering()) {
             if (!showingBufferingIcon) {
-                playPauseFab.setImageResource(R.drawable.ic_sync_white_24dp);
+                playPauseFab.setImageDrawable(null);
+                bufferingProgress.setVisibility(View.VISIBLE);
                 showingBufferingIcon = true;
             }
         } else if (showingBufferingIcon) {
+            bufferingProgress.setVisibility(View.GONE);
             playPauseFab.setImageDrawable(playerFabPlayPauseDrawable);
             showingBufferingIcon = false;
         }

@@ -130,6 +130,15 @@
             app:elevation="4dp"
             app:pressedTranslationZ="2dp" />
 
+        <ProgressBar
+            android:id="@+id/player_buffering_progress"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerInParent="true"
+            android:indeterminate="true"
+            android:visibility="gone" />
+
     </RelativeLayout>
 
 </LinearLayout>

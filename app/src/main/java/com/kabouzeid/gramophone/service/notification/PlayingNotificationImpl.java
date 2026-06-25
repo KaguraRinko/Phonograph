@@ -137,8 +137,7 @@ public class PlayingNotificationImpl extends PlayingNotification {
                                 Bitmap prev = ImageUtil.createBitmap(ImageUtil.getTintedVectorDrawable(service, R.drawable.ic_skip_previous_white_24dp, primary), 1.5f);
                                 Bitmap next = ImageUtil.createBitmap(ImageUtil.getTintedVectorDrawable(service, R.drawable.ic_skip_next_white_24dp, primary), 1.5f);
                                 Bitmap playPause = ImageUtil.createBitmap(ImageUtil.getTintedVectorDrawable(service,
-                                        isBuffering ? R.drawable.ic_sync_white_24dp
-                                                : isPlaying ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp,
+                                        isPlaying ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp,
                                         primary), 1.5f);
 
                                 notificationLayout.setTextColor(R.id.title, primary);
@@ -146,6 +145,8 @@ public class PlayingNotificationImpl extends PlayingNotification {
                                 notificationLayout.setImageViewBitmap(R.id.action_prev, prev);
                                 notificationLayout.setImageViewBitmap(R.id.action_next, next);
                                 notificationLayout.setImageViewBitmap(R.id.action_play_pause, playPause);
+                                notificationLayout.setViewVisibility(R.id.action_play_pause, isBuffering ? View.INVISIBLE : View.VISIBLE);
+                                notificationLayout.setViewVisibility(R.id.action_play_pause_progress, isBuffering ? View.VISIBLE : View.GONE);
 
                                 notificationLayoutBig.setTextColor(R.id.title, primary);
                                 notificationLayoutBig.setTextColor(R.id.text, secondary);
@@ -153,6 +154,8 @@ public class PlayingNotificationImpl extends PlayingNotification {
                                 notificationLayoutBig.setImageViewBitmap(R.id.action_prev, prev);
                                 notificationLayoutBig.setImageViewBitmap(R.id.action_next, next);
                                 notificationLayoutBig.setImageViewBitmap(R.id.action_play_pause, playPause);
+                                notificationLayoutBig.setViewVisibility(R.id.action_play_pause, isBuffering ? View.INVISIBLE : View.VISIBLE);
+                                notificationLayoutBig.setViewVisibility(R.id.action_play_pause_progress, isBuffering ? View.VISIBLE : View.GONE);
                             }
                         });
             }
@@ -173,6 +176,8 @@ public class PlayingNotificationImpl extends PlayingNotification {
         pendingIntent = buildPendingIntent(service, MusicService.ACTION_TOGGLE_PAUSE, serviceName);
         notificationLayout.setOnClickPendingIntent(R.id.action_play_pause, pendingIntent);
         notificationLayoutBig.setOnClickPendingIntent(R.id.action_play_pause, pendingIntent);
+        notificationLayout.setOnClickPendingIntent(R.id.action_play_pause_progress, pendingIntent);
+        notificationLayoutBig.setOnClickPendingIntent(R.id.action_play_pause_progress, pendingIntent);
 
         // Next track
         pendingIntent = buildPendingIntent(service, MusicService.ACTION_SKIP, serviceName);

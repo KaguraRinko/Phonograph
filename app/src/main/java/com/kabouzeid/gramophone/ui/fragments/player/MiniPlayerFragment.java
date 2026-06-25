@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.kabouzeid.appthemehelper.ThemeStore;
@@ -33,6 +34,7 @@ public class MiniPlayerFragment extends AbsMusicServiceFragment implements Music
 
     TextView miniPlayerTitle;
     ImageView miniPlayerPlayPauseButton;
+    ProgressBar miniPlayerBufferingProgress;
     MaterialProgressBar progressBar;
 
     private PlayPauseDrawable miniPlayerPlayPauseDrawable;
@@ -57,6 +59,7 @@ public class MiniPlayerFragment extends AbsMusicServiceFragment implements Music
         super.onViewCreated(view, savedInstanceState);
         miniPlayerTitle = view.findViewById(R.id.mini_player_title);
         miniPlayerPlayPauseButton = view.findViewById(R.id.mini_player_play_pause_button);
+        miniPlayerBufferingProgress = view.findViewById(R.id.mini_player_buffering_progress);
         progressBar = view.findViewById(R.id.progress_bar);
 
         view.setOnTouchListener(new FlingPlayBackController(getActivity()));
@@ -77,7 +80,9 @@ public class MiniPlayerFragment extends AbsMusicServiceFragment implements Music
         miniPlayerPlayPauseDrawable = new PlayPauseDrawable(getActivity());
         miniPlayerPlayPauseButton.setImageDrawable(miniPlayerPlayPauseDrawable);
         miniPlayerPlayPauseButton.setColorFilter(ATHUtil.resolveColor(getActivity(), R.attr.iconColor, ThemeStore.textColorSecondary(getActivity())), PorterDuff.Mode.SRC_IN);
-        miniPlayerPlayPauseButton.setOnClickListener(new PlayPauseButtonOnClickHandler());
+        PlayPauseButtonOnClickHandler clickHandler = new PlayPauseButtonOnClickHandler();
+        miniPlayerPlayPauseButton.setOnClickListener(clickHandler);
+        miniPlayerBufferingProgress.setOnClickListener(clickHandler);
     }
 
     private void updateSongTitle() {
@@ -158,14 +163,14 @@ public class MiniPlayerFragment extends AbsMusicServiceFragment implements Music
     protected void updatePlayPauseDrawableState(boolean animate) {
         if (MusicPlayerRemote.isBuffering()) {
             if (!showingBufferingIcon) {
-                miniPlayerPlayPauseButton.setImageResource(R.drawable.ic_sync_white_24dp);
-                miniPlayerPlayPauseButton.setColorFilter(ATHUtil.resolveColor(getActivity(), R.attr.iconColor, ThemeStore.textColorSecondary(getActivity())), PorterDuff.Mode.SRC_IN);
+                miniPlayerPlayPauseButton.setVisibility(View.INVISIBLE);
+                miniPlayerBufferingProgress.setVisibility(View.VISIBLE);
                 showingBufferingIcon = true;
             }
         } else {
             if (showingBufferingIcon) {
-                miniPlayerPlayPauseButton.setImageDrawable(miniPlayerPlayPauseDrawable);
-                miniPlayerPlayPauseButton.setColorFilter(ATHUtil.resolveColor(getActivity(), R.attr.iconColor, ThemeStore.textColorSecondary(getActivity())), PorterDuff.Mode.SRC_IN);
+                miniPlayerBufferingProgress.setVisibility(View.GONE);
+                miniPlayerPlayPauseButton.setVisibility(View.VISIBLE);
                 showingBufferingIcon = false;
             }
         }

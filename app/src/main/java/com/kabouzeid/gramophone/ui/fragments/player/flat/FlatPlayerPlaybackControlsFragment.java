@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -41,6 +42,7 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
     ImageButton nextButton;
     ImageButton repeatButton;
     ImageButton shuffleButton;
+    ProgressBar bufferingProgress;
 
     SeekBar progressSlider;
     TextView songTotalTime;
@@ -77,6 +79,7 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
         nextButton = view.findViewById(R.id.player_next_button);
         repeatButton = view.findViewById(R.id.player_repeat_button);
         shuffleButton = view.findViewById(R.id.player_shuffle_button);
+        bufferingProgress = view.findViewById(R.id.player_buffering_progress);
         progressSlider = view.findViewById(R.id.player_progress_slider);
         songTotalTime = view.findViewById(R.id.player_song_total_time);
         songCurrentProgress = view.findViewById(R.id.player_song_current_progress);
@@ -150,7 +153,9 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
         playPauseDrawable = new PlayPauseDrawable(getActivity());
         playPauseButton.setImageDrawable(playPauseDrawable);
         updatePlayPauseColor();
-        playPauseButton.setOnClickListener(new PlayPauseButtonOnClickHandler());
+        PlayPauseButtonOnClickHandler clickHandler = new PlayPauseButtonOnClickHandler();
+        playPauseButton.setOnClickListener(clickHandler);
+        bufferingProgress.setOnClickListener(clickHandler);
         playPauseButton.post(() -> {
             if (playPauseButton != null) {
                 playPauseButton.setPivotX(playPauseButton.getWidth() / 2);
@@ -162,11 +167,13 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
     protected void updatePlayPauseDrawableState(boolean animate) {
         if (MusicPlayerRemote.isBuffering()) {
             if (!showingBufferingIcon) {
-                playPauseButton.setImageResource(R.drawable.ic_sync_white_24dp);
+                playPauseButton.setImageDrawable(null);
+                bufferingProgress.setVisibility(View.VISIBLE);
                 updatePlayPauseColor();
                 showingBufferingIcon = true;
             }
         } else if (showingBufferingIcon) {
+            bufferingProgress.setVisibility(View.GONE);
             playPauseButton.setImageDrawable(playPauseDrawable);
             updatePlayPauseColor();
             showingBufferingIcon = false;
