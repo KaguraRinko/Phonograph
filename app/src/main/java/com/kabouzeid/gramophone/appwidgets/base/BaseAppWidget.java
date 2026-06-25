@@ -22,6 +22,7 @@ import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.model.Song;
 import com.kabouzeid.gramophone.service.MusicService;
 import com.kabouzeid.gramophone.util.MusicUtil;
+import com.kabouzeid.gramophone.util.PendingIntentUtil;
 
 public abstract class BaseAppWidget extends AppWidgetProvider {
     public static final String NAME = "app_widget";
@@ -75,10 +76,11 @@ public abstract class BaseAppWidget extends AppWidgetProvider {
     protected PendingIntent buildPendingIntent(Context context, final String action, final ComponentName serviceName) {
         Intent intent = new Intent(action);
         intent.setComponent(serviceName);
+        int flags = PendingIntentUtil.immutableFlag(PendingIntent.FLAG_UPDATE_CURRENT);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return PendingIntent.getForegroundService(context, 0, intent, 0);
+            return PendingIntent.getForegroundService(context, 0, intent, flags);
         } else {
-            return PendingIntent.getService(context, 0, intent, 0);
+            return PendingIntent.getService(context, 0, intent, flags);
         }
     }
 

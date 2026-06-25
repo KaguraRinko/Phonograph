@@ -60,6 +60,7 @@ import com.kabouzeid.gramophone.service.notification.PlayingNotificationImpl;
 import com.kabouzeid.gramophone.service.notification.PlayingNotificationImpl24;
 import com.kabouzeid.gramophone.service.playback.Playback;
 import com.kabouzeid.gramophone.util.MusicUtil;
+import com.kabouzeid.gramophone.util.PendingIntentUtil;
 import com.kabouzeid.gramophone.util.PreferenceUtil;
 import com.kabouzeid.gramophone.util.Util;
 
@@ -203,7 +204,11 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
 
         uiThreadHandler = new Handler();
 
-        registerReceiver(widgetIntentReceiver, new IntentFilter(APP_WIDGET_UPDATE));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(widgetIntentReceiver, new IntentFilter(APP_WIDGET_UPDATE), Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(widgetIntentReceiver, new IntentFilter(APP_WIDGET_UPDATE));
+        }
 
         initNotification();
 
@@ -245,7 +250,11 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
         mediaButtonIntent.setComponent(mediaButtonReceiverComponentName);
 
-        PendingIntent mediaButtonReceiverPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, mediaButtonIntent, 0);
+        PendingIntent mediaButtonReceiverPendingIntent = PendingIntent.getBroadcast(
+                getApplicationContext(),
+                0,
+                mediaButtonIntent,
+                PendingIntentUtil.immutableFlag(PendingIntent.FLAG_UPDATE_CURRENT));
 
         mediaSession = new MediaSessionCompat(this, "Phonograph", mediaButtonReceiverComponentName, mediaButtonReceiverPendingIntent);
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
@@ -859,7 +868,11 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
                     } else {
                         playback.start();
                         if (!becomingNoisyReceiverRegistered) {
-                            registerReceiver(becomingNoisyReceiver, becomingNoisyReceiverIntentFilter);
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                registerReceiver(becomingNoisyReceiver, becomingNoisyReceiverIntentFilter, Context.RECEIVER_NOT_EXPORTED);
+                            } else {
+                                registerReceiver(becomingNoisyReceiver, becomingNoisyReceiverIntentFilter);
+                            }
                             becomingNoisyReceiverRegistered = true;
                         }
                         if (notHandledMetaChangedForCurrentTrack) {

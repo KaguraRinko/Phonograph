@@ -25,6 +25,7 @@ import com.kabouzeid.gramophone.model.Song;
 import com.kabouzeid.gramophone.service.MusicService;
 import com.kabouzeid.gramophone.ui.activities.MainActivity;
 import com.kabouzeid.gramophone.util.ImageUtil;
+import com.kabouzeid.gramophone.util.PendingIntentUtil;
 
 public class AppWidgetClassic extends BaseAppWidget {
     public static final String NAME = "app_widget_classic";
@@ -141,7 +142,7 @@ public class AppWidgetClassic extends BaseAppWidget {
         // Home
         action = new Intent(context, MainActivity.class);
         action.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        pendingIntent = PendingIntent.getActivity(context, 0, action, 0);
+        pendingIntent = PendingIntent.getActivity(context, 0, action, PendingIntentUtil.immutableFlag(PendingIntent.FLAG_UPDATE_CURRENT));
         views.setOnClickPendingIntent(R.id.image, pendingIntent);
         views.setOnClickPendingIntent(R.id.media_titles, pendingIntent);
 
