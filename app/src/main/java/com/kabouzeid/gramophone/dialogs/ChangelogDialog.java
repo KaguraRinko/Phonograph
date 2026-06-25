@@ -73,7 +73,7 @@ public class ChangelogDialog extends DialogFragment {
             in.close();
 
             // Inject color values for WebView body background and links
-            final String backgroundColor = colorToCSS(ATHUtil.resolveColor(getActivity(), R.attr.md_background_color, Color.parseColor(ThemeSingleton.get().darkTheme ? "#424242" : "#ffffff")));
+            final String backgroundColor = colorToCSS(ATHUtil.resolveColor(getActivity(), com.afollestad.materialdialogs.R.attr.md_background_color, Color.parseColor(ThemeSingleton.get().darkTheme ? "#424242" : "#ffffff")));
             final String contentColor = colorToCSS(Color.parseColor(ThemeSingleton.get().darkTheme ? "#ffffff" : "#000000"));
             final String changeLog = buf.toString()
                     .replace("{style-placeholder}",
