@@ -31,7 +31,9 @@ import com.kabouzeid.gramophone.subsonic.rest.SubsonicRestClient;
 import com.kabouzeid.gramophone.ui.activities.base.AbsBaseActivity;
 
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class SubsonicServersActivity extends AbsBaseActivity {
@@ -44,7 +46,9 @@ public class SubsonicServersActivity extends AbsBaseActivity {
     private Toolbar toolbar;
     private RecyclerView recyclerView;
     private TextView emptyView;
+    private TextView syncStatusView;
     private ServerAdapter adapter;
+    private long syncingServerId = SubsonicServer.NO_ID;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,6 +58,7 @@ public class SubsonicServersActivity extends AbsBaseActivity {
         toolbar = findViewById(R.id.toolbar);
         recyclerView = findViewById(R.id.recycler_view);
         emptyView = findViewById(android.R.id.empty);
+        syncStatusView = findViewById(R.id.sync_status);
 
         setStatusbarColorAuto();
         setNavigationbarColorAuto();
@@ -173,18 +178,47 @@ public class SubsonicServersActivity extends AbsBaseActivity {
     }
 
     private void syncServer(@NonNull SubsonicServer server) {
+        if (syncingServerId != SubsonicServer.NO_ID) {
+            Toast.makeText(this, R.string.sync_already_running, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        syncingServerId = server.id;
+        showSyncStatus(server, getString(R.string.sync_started));
+        adapter.notifyDataSetChanged();
         Toast.makeText(this, R.string.sync_started, Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             try {
-                new SubsonicSyncer(SubsonicServersActivity.this, server).sync();
+                new SubsonicSyncer(SubsonicServersActivity.this, server,
+                        message -> runOnUiThread(() -> showSyncStatus(server, message))).sync();
                 runOnUiThread(() -> {
+                    syncingServerId = SubsonicServer.NO_ID;
                     reloadServers();
+                    showSyncStatus(server, getString(R.string.sync_finished));
                     Toast.makeText(SubsonicServersActivity.this, R.string.sync_finished, Toast.LENGTH_SHORT).show();
                 });
             } catch (IOException | SubsonicException e) {
-                runOnUiThread(() -> Toast.makeText(SubsonicServersActivity.this, getString(R.string.sync_failed_x, e.getMessage()), Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    syncingServerId = SubsonicServer.NO_ID;
+                    adapter.notifyDataSetChanged();
+                    String message = getString(R.string.sync_failed_x, e.getMessage());
+                    showSyncStatus(server, message);
+                    Toast.makeText(SubsonicServersActivity.this, message, Toast.LENGTH_LONG).show();
+                });
             }
         }).start();
+    }
+
+    private void showSyncStatus(@NonNull SubsonicServer server, @NonNull String message) {
+        syncStatusView.setVisibility(View.VISIBLE);
+        syncStatusView.setText(getString(R.string.sync_status_x_y, server.name, message));
+    }
+
+    @NonNull
+    private String formatLastSynced(long lastSynced) {
+        if (lastSynced <= 0) {
+            return getString(R.string.last_synced_never);
+        }
+        return getString(R.string.last_synced_x, DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(new Date(lastSynced)));
     }
 
     private void deleteServer(@NonNull SubsonicServer server) {
@@ -240,11 +274,15 @@ public class SubsonicServersActivity extends AbsBaseActivity {
             title = itemView.findViewById(R.id.title);
             text = itemView.findViewById(R.id.text);
             menu = itemView.findViewById(R.id.menu);
+            text.setSingleLine(false);
+            text.setMaxLines(2);
         }
 
         void bind(@NonNull SubsonicServer server) {
             title.setText(server.name);
-            text.setText(server.baseUrl + " - " + server.username);
+            text.setText(server.baseUrl + " - " + server.username + "\n" + formatLastSynced(server.lastSynced));
+            itemView.setEnabled(syncingServerId == SubsonicServer.NO_ID || syncingServerId == server.id);
+            menu.setEnabled(syncingServerId == SubsonicServer.NO_ID || syncingServerId == server.id);
             itemView.setOnClickListener(v -> syncServer(server));
             menu.setOnClickListener(v -> {
                 PopupMenu popupMenu = new PopupMenu(SubsonicServersActivity.this, v);

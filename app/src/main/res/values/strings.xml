@@ -269,6 +269,17 @@
     <string name="sync_started">Sync started.</string>
     <string name="sync_finished">Sync finished.</string>
     <string name="sync_failed_x">Sync failed: %s</string>
+    <string name="sync_already_running">Sync already running.</string>
+    <string name="sync_status_x_y">%1$s - %2$s</string>
+    <string name="sync_progress_ping">Testing connection…</string>
+    <string name="sync_progress_genres">Loading genres…</string>
+    <string name="sync_progress_artists">Loading artists…</string>
+    <string name="sync_progress_artist_x_of_y">Syncing artists %1$d/%2$d</string>
+    <string name="sync_progress_playlists">Loading playlists…</string>
+    <string name="sync_progress_playlist_x_of_y">Syncing playlists %1$d/%2$d</string>
+    <string name="sync_progress_saving">Saving library…</string>
+    <string name="last_synced_never">Last sync: never</string>
+    <string name="last_synced_x">Last sync: %s</string>
     <string name="delete_server_x">Delete %s?</string>
     <string name="http_server_warning">This server uses HTTP. Use HTTPS when possible.</string>
     <string name="server_fields_required">Server URL, username, and password are required.</string>

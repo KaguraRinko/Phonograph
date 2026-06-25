@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.subsonic.rest.SubsonicRestClient;
 import com.kabouzeid.gramophone.subsonic.rest.model.SubsonicAlbum;
 import com.kabouzeid.gramophone.subsonic.rest.model.SubsonicArtist;
@@ -24,34 +25,52 @@ public class SubsonicSyncer {
     private final Context context;
     private final SubsonicServer server;
     private final SubsonicRestClient client;
+    @Nullable
+    private final ProgressListener progressListener;
 
     public SubsonicSyncer(@NonNull Context context, @NonNull SubsonicServer server) {
+        this(context, server, null);
+    }
+
+    public SubsonicSyncer(@NonNull Context context, @NonNull SubsonicServer server,
+                          @Nullable ProgressListener progressListener) {
         this.context = context.getApplicationContext();
         this.server = server;
+        this.progressListener = progressListener;
         client = new SubsonicRestClient(context, server);
     }
 
     public void sync() throws IOException, SubsonicException {
+        publishProgress(context.getString(R.string.sync_progress_ping));
         client.ping();
 
         List<SubsonicLibraryStore.CachedSong> songs = new ArrayList<>();
+        publishProgress(context.getString(R.string.sync_progress_genres));
         List<SubsonicLibraryStore.CachedGenre> genres = loadGenres();
         List<SubsonicLibraryStore.CachedPlaylist> playlists = new ArrayList<>();
         Set<String> visitedAlbums = new HashSet<>();
 
+        publishProgress(context.getString(R.string.sync_progress_artists));
+        List<SubsonicArtist> artists = new ArrayList<>();
         SubsonicResponse artistsResponse = SubsonicRestClient.execute(client.getApiService().getArtists(client.createAuthParams()));
         if (artistsResponse.artists != null && artistsResponse.artists.indexes != null) {
             for (SubsonicIndex index : artistsResponse.artists.indexes) {
                 if (index.artists == null) continue;
-                for (SubsonicArtist artist : index.artists) {
-                    loadArtistSongs(artist, visitedAlbums, songs);
-                }
+                artists.addAll(index.artists);
+            }
+            for (int i = 0; i < artists.size(); i++) {
+                publishProgress(context.getString(R.string.sync_progress_artist_x_of_y, i + 1, artists.size()));
+                loadArtistSongs(artists.get(i), visitedAlbums, songs);
             }
         }
 
+        publishProgress(context.getString(R.string.sync_progress_playlists));
         SubsonicResponse playlistsResponse = SubsonicRestClient.execute(client.getApiService().getPlaylists(client.createAuthParams()));
         if (playlistsResponse.playlists != null && playlistsResponse.playlists.playlists != null) {
-            for (SubsonicPlaylist playlist : playlistsResponse.playlists.playlists) {
+            List<SubsonicPlaylist> remotePlaylists = playlistsResponse.playlists.playlists;
+            for (int i = 0; i < remotePlaylists.size(); i++) {
+                publishProgress(context.getString(R.string.sync_progress_playlist_x_of_y, i + 1, remotePlaylists.size()));
+                SubsonicPlaylist playlist = remotePlaylists.get(i);
                 SubsonicLibraryStore.CachedPlaylist cachedPlaylist = loadPlaylist(playlist);
                 if (cachedPlaylist != null) {
                     playlists.add(cachedPlaylist);
@@ -59,8 +78,19 @@ public class SubsonicSyncer {
             }
         }
 
+        publishProgress(context.getString(R.string.sync_progress_saving));
         SubsonicLibraryStore.getInstance(context).replaceLibrary(server.id, songs, genres, playlists);
         SubsonicServerStore.getInstance(context).updateLastSynced(server.id, System.currentTimeMillis());
+    }
+
+    private void publishProgress(@NonNull String message) {
+        if (progressListener != null) {
+            progressListener.onProgress(message);
+        }
+    }
+
+    public interface ProgressListener {
+        void onProgress(@NonNull String message);
     }
 
     private void loadArtistSongs(@NonNull SubsonicArtist artist, @NonNull Set<String> visitedAlbums,
