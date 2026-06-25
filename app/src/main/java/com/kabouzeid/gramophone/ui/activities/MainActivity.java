@@ -20,6 +20,7 @@ import com.google.android.material.navigation.NavigationView;
 import androidx.fragment.app.Fragment;
 import androidx.drawerlayout.widget.DrawerLayout;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,6 +44,8 @@ import com.kabouzeid.gramophone.loader.PlaylistSongLoader;
 import com.kabouzeid.gramophone.misc.UpdateToastMediaScannerCompletionListener;
 import com.kabouzeid.gramophone.model.Song;
 import com.kabouzeid.gramophone.service.MusicService;
+import com.kabouzeid.gramophone.source.MediaSource;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.ui.activities.base.AbsSlidingMusicPanelActivity;
 import com.kabouzeid.gramophone.ui.activities.intro.AppIntroActivity;
 import com.kabouzeid.gramophone.ui.fragments.mainactivity.folders.FoldersFragment;
@@ -66,6 +69,9 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
 
     private static final int LIBRARY = 0;
     private static final int FOLDERS = 1;
+    private static final int DYNAMIC_SOURCE_ITEM_ID = 100000;
+    private static final int DYNAMIC_SOURCE_ITEM_ID_LIMIT = 200000;
+    private static final String EXTRA_SOURCE_ID = "extra_source_id";
 
     NavigationView navigationView;
     DrawerLayout drawerLayout;
@@ -95,7 +101,13 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
         setUpDrawerLayout();
 
         if (savedInstanceState == null) {
-            setMusicChooser(PreferenceUtil.getInstance(this).getLastMusicChooser());
+            int lastMusicChooser = PreferenceUtil.getInstance(this).getLastMusicChooser();
+            String currentSourceId = MediaSourceManager.getCurrentSourceId(this);
+            if (lastMusicChooser == LIBRARY && !MediaSourceManager.isLocalSource(currentSourceId)) {
+                setLibrarySource(currentSourceId);
+            } else {
+                setMusicChooser(lastMusicChooser);
+            }
         } else {
             restoreCurrentFragment();
         }
@@ -119,14 +131,25 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
         PreferenceUtil.getInstance(this).setLastMusicChooser(key);
         switch (key) {
             case LIBRARY:
-                navigationView.setCheckedItem(R.id.nav_library);
-                setCurrentFragment(LibraryFragment.newInstance());
+                setLibrarySource(MediaSourceManager.LOCAL_SOURCE_ID);
                 break;
             case FOLDERS:
+                MediaSourceManager.setCurrentSourceId(this, MediaSourceManager.LOCAL_SOURCE_ID);
+                refreshMediaSourceMenu();
                 navigationView.setCheckedItem(R.id.nav_folders);
                 setCurrentFragment(FoldersFragment.newInstance(this));
                 break;
         }
+    }
+
+    private void setLibrarySource(@NonNull String sourceId) {
+        if (MediaSourceManager.getSource(this, sourceId) == null) {
+            sourceId = MediaSourceManager.LOCAL_SOURCE_ID;
+        }
+        PreferenceUtil.getInstance(this).setLastMusicChooser(LIBRARY);
+        MediaSourceManager.setCurrentSourceId(this, sourceId);
+        refreshMediaSourceMenu();
+        setCurrentFragment(LibraryFragment.newInstance());
     }
 
     private void setCurrentFragment(@SuppressWarnings("NullableProblems") Fragment fragment) {
@@ -175,26 +198,93 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
         int accentColor = ThemeStore.accentColor(this);
         NavigationViewUtil.setItemIconColors(navigationView, ATHUtil.resolveColor(this, R.attr.iconColor, ThemeStore.textColorSecondary(this)), accentColor);
         NavigationViewUtil.setItemTextColors(navigationView, ThemeStore.textColorPrimary(this), accentColor);
+        refreshMediaSourceMenu();
 
         navigationView.setNavigationItemSelectedListener(menuItem -> {
             drawerLayout.closeDrawers();
-                        if (menuItem.getItemId() == R.id.nav_library) {
-                    new Handler().postDelayed(() -> setMusicChooser(LIBRARY), 200);
+            String sourceId = getMenuSourceId(menuItem);
+            if (sourceId != null) {
+                new Handler().postDelayed(() -> setLibrarySource(sourceId), 200);
             } else if (menuItem.getItemId() == R.id.nav_folders) {
-                    new Handler().postDelayed(() -> setMusicChooser(FOLDERS), 200);
+                new Handler().postDelayed(() -> setMusicChooser(FOLDERS), 200);
             } else if (menuItem.getItemId() == R.id.action_scan) {
-                    new Handler().postDelayed(() -> {
-                        if (scanMediaFolderLauncher != null) {
-                            scanMediaFolderLauncher.launch(null);
-                        }
-                    }, 200);
+                new Handler().postDelayed(() -> {
+                    if (scanMediaFolderLauncher != null) {
+                        scanMediaFolderLauncher.launch(null);
+                    }
+                }, 200);
+            } else if (menuItem.getItemId() == R.id.action_add_subsonic_server) {
+                new Handler().postDelayed(() -> startActivity(new Intent(MainActivity.this, SubsonicServersActivity.class)), 200);
             } else if (menuItem.getItemId() == R.id.nav_settings) {
-                    new Handler().postDelayed(() -> startActivity(new Intent(MainActivity.this, SettingsActivity.class)), 200);
+                new Handler().postDelayed(() -> startActivity(new Intent(MainActivity.this, SettingsActivity.class)), 200);
             } else if (menuItem.getItemId() == R.id.nav_about) {
-                    new Handler().postDelayed(() -> startActivity(new Intent(MainActivity.this, AboutActivity.class)), 200);
+                new Handler().postDelayed(() -> startActivity(new Intent(MainActivity.this, AboutActivity.class)), 200);
             }
             return true;
         });
+    }
+
+    @Nullable
+    private String getMenuSourceId(@NonNull MenuItem menuItem) {
+        Intent intent = menuItem.getIntent();
+        return intent == null ? null : intent.getStringExtra(EXTRA_SOURCE_ID);
+    }
+
+    private void refreshMediaSourceMenu() {
+        if (navigationView == null) {
+            return;
+        }
+
+        Menu menu = navigationView.getMenu();
+        for (int i = menu.size() - 1; i >= 0; i--) {
+            int itemId = menu.getItem(i).getItemId();
+            if (itemId >= DYNAMIC_SOURCE_ITEM_ID && itemId < DYNAMIC_SOURCE_ITEM_ID_LIMIT) {
+                menu.removeItem(itemId);
+            }
+        }
+
+        MenuItem localLibrary = menu.findItem(R.id.nav_library);
+        if (localLibrary != null) {
+            localLibrary.setIntent(new Intent().putExtra(EXTRA_SOURCE_ID, MediaSourceManager.LOCAL_SOURCE_ID));
+        }
+
+        int sourceIndex = 0;
+        for (MediaSource source : MediaSourceManager.getAvailableSources(this)) {
+            if (source.isLocal()) {
+                continue;
+            }
+            menu.add(R.id.navigation_drawer_menu_category_sections,
+                    DYNAMIC_SOURCE_ITEM_ID + sourceIndex,
+                    2 + sourceIndex,
+                    source.name)
+                    .setIcon(R.drawable.ic_library_music_white_24dp)
+                    .setCheckable(true)
+                    .setIntent(new Intent().putExtra(EXTRA_SOURCE_ID, source.id));
+            sourceIndex++;
+        }
+
+        int lastMusicChooser = PreferenceUtil.getInstance(this).getLastMusicChooser();
+        if (lastMusicChooser == FOLDERS) {
+            navigationView.setCheckedItem(R.id.nav_folders);
+            return;
+        }
+
+        String currentSourceId = MediaSourceManager.getCurrentSourceId(this);
+        if (MediaSourceManager.isLocalSource(currentSourceId)) {
+            navigationView.setCheckedItem(R.id.nav_library);
+            return;
+        }
+
+        for (int i = 0; i < menu.size(); i++) {
+            MenuItem item = menu.getItem(i);
+            if (currentSourceId.equals(getMenuSourceId(item))) {
+                item.setChecked(true);
+                return;
+            }
+        }
+
+        MediaSourceManager.setCurrentSourceId(this, MediaSourceManager.LOCAL_SOURCE_ID);
+        navigationView.setCheckedItem(R.id.nav_library);
     }
 
     private void scanSelectedMediaFolder(@Nullable Uri uri) {
@@ -228,6 +318,12 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
 
     private void setUpDrawerLayout() {
         setUpNavigationView();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshMediaSourceMenu();
     }
 
     private void updateNavigationDrawerHeader() {

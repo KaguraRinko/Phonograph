@@ -16,4 +16,5 @@
     <item name="action_song_sort_order_year" type="id" />
 
     <item name="action_multi_select_adapter_check_all" type="id" />
+    <item name="action_add_subsonic_server" type="id" />
 </resources>
