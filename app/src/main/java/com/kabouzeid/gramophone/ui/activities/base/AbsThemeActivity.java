@@ -4,7 +4,11 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.ColorInt;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.kabouzeid.appthemehelper.ATH;
 import com.kabouzeid.appthemehelper.ThemeStore;
@@ -26,6 +30,52 @@ public abstract class AbsThemeActivity extends ATHToolbarActivity {
         setTheme(PreferenceUtil.getInstance(this).getGeneralTheme());
         super.onCreate(savedInstanceState);
         MaterialDialogsUtil.updateMaterialDialogsThemeSingleton(this);
+    }
+
+    @Override
+    public void setContentView(int layoutResID) {
+        super.setContentView(layoutResID);
+        applySystemBarInsets();
+    }
+
+    @Override
+    public void setContentView(View view) {
+        super.setContentView(view);
+        applySystemBarInsets();
+    }
+
+    @Override
+    public void setContentView(View view, ViewGroup.LayoutParams params) {
+        super.setContentView(view, params);
+        applySystemBarInsets();
+    }
+
+    private void applySystemBarInsets() {
+        if (Build.VERSION.SDK_INT < 35) {
+            return;
+        }
+        final View content = findViewById(android.R.id.content);
+        if (content == null) {
+            return;
+        }
+        final int initialLeft = content.getPaddingLeft();
+        final int initialTop = content.getPaddingTop();
+        final int initialRight = content.getPaddingRight();
+        final int initialBottom = content.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(content, (view, windowInsets) -> {
+            Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            View statusBar = findViewById(R.id.status_bar);
+            if (statusBar != null && systemBars.top > 0) {
+                ViewGroup.LayoutParams layoutParams = statusBar.getLayoutParams();
+                if (layoutParams.height != systemBars.top) {
+                    layoutParams.height = systemBars.top;
+                    statusBar.setLayoutParams(layoutParams);
+                }
+            }
+            view.setPadding(initialLeft, initialTop, initialRight, initialBottom + systemBars.bottom);
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(content);
     }
 
     protected void setDrawUnderStatusbar() {
