@@ -9,6 +9,9 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.ColorInt;
 import androidx.annotation.FloatRange;
 import androidx.annotation.LayoutRes;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +47,7 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
     private NowPlayingScreen currentNowPlayingScreen;
     private AbsPlayerFragment playerFragment;
     private MiniPlayerFragment miniPlayerFragment;
+    private int miniPlayerNavigationInset;
 
     private ValueAnimator navigationBarColorAnimator;
     private ArgbEvaluator argbEvaluator = new ArgbEvaluator();
@@ -72,7 +76,9 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
         miniPlayerFragment = (MiniPlayerFragment) getSupportFragmentManager().findFragmentById(R.id.mini_player_fragment);
 
         //noinspection ConstantConditions
-        miniPlayerFragment.getView().setOnClickListener(v -> expandPanel());
+        View miniPlayerView = miniPlayerFragment.getView();
+        miniPlayerView.setOnClickListener(v -> expandPanel());
+        applyMiniPlayerNavigationInsets(miniPlayerView);
 
         slidingUpPanelLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -116,6 +122,41 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
 
     public void setAntiDragView(View antiDragView) {
         slidingUpPanelLayout.setAntiDragView(antiDragView);
+    }
+
+    private void applyMiniPlayerNavigationInsets(View miniPlayerView) {
+        if (Build.VERSION.SDK_INT < 35) {
+            return;
+        }
+
+        final int initialLeft = miniPlayerView.getPaddingLeft();
+        final int initialTop = miniPlayerView.getPaddingTop();
+        final int initialRight = miniPlayerView.getPaddingRight();
+        final int initialBottom = miniPlayerView.getPaddingBottom();
+        final int miniPlayerHeight = getResources().getDimensionPixelSize(R.dimen.mini_player_height);
+
+        ViewCompat.setOnApplyWindowInsetsListener(miniPlayerView, (view, windowInsets) -> {
+            Insets navigationBars = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            miniPlayerNavigationInset = navigationBars.bottom;
+            view.setPadding(initialLeft, initialTop, initialRight, initialBottom + miniPlayerNavigationInset);
+
+            ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+            int targetHeight = miniPlayerHeight + miniPlayerNavigationInset;
+            if (layoutParams != null && layoutParams.height != targetHeight) {
+                layoutParams.height = targetHeight;
+                view.setLayoutParams(layoutParams);
+            }
+
+            if (!MusicPlayerRemote.getPlayingQueue().isEmpty() && slidingUpPanelLayout.getPanelHeight() != 0) {
+                slidingUpPanelLayout.setPanelHeight(getMiniPlayerPanelHeight());
+            }
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(miniPlayerView);
+    }
+
+    private int getMiniPlayerPanelHeight() {
+        return getResources().getDimensionPixelSize(R.dimen.mini_player_height) + miniPlayerNavigationInset;
     }
 
     protected abstract View createContentView();
@@ -211,7 +252,7 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
             slidingUpPanelLayout.setPanelHeight(0);
             collapsePanel();
         } else {
-            slidingUpPanelLayout.setPanelHeight(getResources().getDimensionPixelSize(R.dimen.mini_player_height));
+            slidingUpPanelLayout.setPanelHeight(getMiniPlayerPanelHeight());
         }
     }
 
