@@ -278,6 +278,8 @@
     <string name="sync_progress_playlists">Loading playlists…</string>
     <string name="sync_progress_playlist_x_of_y">Syncing playlists %1$d/%2$d</string>
     <string name="sync_progress_saving">Saving library…</string>
+    <string name="subsonic_syncing_title">Syncing</string>
+    <string name="subsonic_syncing_progress_x">%1$d%% - %2$s</string>
     <string name="last_synced_never">Last sync: never</string>
     <string name="last_synced_x">Last sync: %s</string>
     <string name="delete_server_x">Delete %s?</string>

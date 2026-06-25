@@ -11,10 +11,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.kabouzeid.appthemehelper.ThemeStore;
 import com.kabouzeid.gramophone.R;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
+import com.kabouzeid.gramophone.subsonic.SubsonicSyncState;
 import com.kabouzeid.gramophone.util.ViewUtil;
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
@@ -29,9 +32,17 @@ public abstract class AbsLibraryPagerRecyclerViewFragment<A extends RecyclerView
     RecyclerView recyclerView;
     @Nullable
     TextView empty;
+    @Nullable
+    private View syncProgressContainer;
+    @Nullable
+    private ProgressBar syncProgressBar;
+    @Nullable
+    private TextView syncProgressMessage;
 
     private A adapter;
     private LM layoutManager;
+    private boolean showingSyncProgress;
+    private final SubsonicSyncState.Listener syncStateListener = this::updateSyncProgress;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -39,6 +50,9 @@ public abstract class AbsLibraryPagerRecyclerViewFragment<A extends RecyclerView
         this.container = view.findViewById(R.id.container);
         recyclerView = view.findViewById(R.id.recycler_view);
         empty = view.findViewById(android.R.id.empty);
+        syncProgressContainer = view.findViewById(R.id.sync_progress_container);
+        syncProgressBar = view.findViewById(R.id.sync_progress_bar);
+        syncProgressMessage = view.findViewById(R.id.sync_progress_message);
         return view;
     }
 
@@ -51,6 +65,8 @@ public abstract class AbsLibraryPagerRecyclerViewFragment<A extends RecyclerView
         initLayoutManager();
         initAdapter();
         setUpRecyclerView();
+        SubsonicSyncState.addListener(syncStateListener);
+        updateSyncProgress(SubsonicSyncState.getSnapshot());
     }
 
     private void setUpRecyclerView() {
@@ -108,8 +124,36 @@ public abstract class AbsLibraryPagerRecyclerViewFragment<A extends RecyclerView
     private void checkIsEmpty() {
         if (empty != null) {
             empty.setText(getEmptyMessage());
-            empty.setVisibility(adapter == null || adapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
+            empty.setVisibility(!showingSyncProgress && (adapter == null || adapter.getItemCount() == 0) ? View.VISIBLE : View.GONE);
         }
+    }
+
+    private void updateSyncProgress(@Nullable SubsonicSyncState.Snapshot snapshot) {
+        if (syncProgressContainer == null || getContext() == null) {
+            return;
+        }
+
+        long currentServerId = MediaSourceManager.getSubsonicServerId(MediaSourceManager.getCurrentSourceId(getContext()));
+        boolean matchesCurrentSource = snapshot != null && snapshot.serverId == currentServerId;
+        boolean shouldShowProgress = matchesCurrentSource && snapshot.running;
+
+        if (shouldShowProgress) {
+            syncProgressContainer.setVisibility(View.VISIBLE);
+            if (syncProgressBar != null) {
+                syncProgressBar.setProgress(snapshot.progress);
+            }
+            if (syncProgressMessage != null) {
+                syncProgressMessage.setText(getString(R.string.subsonic_syncing_progress_x, snapshot.progress, snapshot.message));
+            }
+        } else {
+            syncProgressContainer.setVisibility(View.GONE);
+        }
+
+        if (showingSyncProgress && matchesCurrentSource && snapshot != null && !snapshot.running) {
+            onMediaStoreChanged();
+        }
+        showingSyncProgress = shouldShowProgress;
+        checkIsEmpty();
     }
 
     @StringRes
@@ -129,7 +173,11 @@ public abstract class AbsLibraryPagerRecyclerViewFragment<A extends RecyclerView
 
     @Override
     public void onDestroyView() {
+        SubsonicSyncState.removeListener(syncStateListener);
         super.onDestroyView();
         getLibraryFragment().removeOnAppBarOffsetChangedListener(this);
+        syncProgressContainer = null;
+        syncProgressBar = null;
+        syncProgressMessage = null;
     }
 }

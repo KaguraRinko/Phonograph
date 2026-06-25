@@ -285,6 +285,17 @@
     <string name="sort_order_artist">艺术家</string>
     <string name="sort_order_album">专辑</string>
     <string name="sort_order_year">年份</string>
+    <string name="sync_finished">同步完成。</string>
+    <string name="sync_failed_x">同步失败：%s</string>
+    <string name="sync_progress_ping">正在测试连接…</string>
+    <string name="sync_progress_genres">正在加载流派…</string>
+    <string name="sync_progress_artists">正在加载艺术家…</string>
+    <string name="sync_progress_artist_x_of_y">正在同步艺术家 %1$d/%2$d</string>
+    <string name="sync_progress_playlists">正在加载播放列表…</string>
+    <string name="sync_progress_playlist_x_of_y">正在同步播放列表 %1$d/%2$d</string>
+    <string name="sync_progress_saving">正在保存资料库…</string>
+    <string name="subsonic_syncing_title">正在同步</string>
+    <string name="subsonic_syncing_progress_x">%1$d%% · %2$s</string>
     <string name="finish_current_music_sleep_timer">播完最后一首</string>
     <string name="dialog_ringtone_title">设置为铃声</string>
     <string name="dialog_ringtone_message">允许 Phonograph 调整音频设定</string>

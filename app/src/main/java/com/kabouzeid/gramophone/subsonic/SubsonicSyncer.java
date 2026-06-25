@@ -41,16 +41,26 @@ public class SubsonicSyncer {
     }
 
     public void sync() throws IOException, SubsonicException {
-        publishProgress(context.getString(R.string.sync_progress_ping));
+        try {
+            doSync();
+            SubsonicSyncState.finish(server.id, context.getString(R.string.sync_finished));
+        } catch (IOException | SubsonicException e) {
+            SubsonicSyncState.finish(server.id, context.getString(R.string.sync_failed_x, e.getMessage()));
+            throw e;
+        }
+    }
+
+    private void doSync() throws IOException, SubsonicException {
+        publishProgress(context.getString(R.string.sync_progress_ping), 5);
         client.ping();
 
         List<SubsonicLibraryStore.CachedSong> songs = new ArrayList<>();
-        publishProgress(context.getString(R.string.sync_progress_genres));
+        publishProgress(context.getString(R.string.sync_progress_genres), 10);
         List<SubsonicLibraryStore.CachedGenre> genres = loadGenres();
         List<SubsonicLibraryStore.CachedPlaylist> playlists = new ArrayList<>();
         Set<String> visitedAlbums = new HashSet<>();
 
-        publishProgress(context.getString(R.string.sync_progress_artists));
+        publishProgress(context.getString(R.string.sync_progress_artists), 15);
         List<SubsonicArtist> artists = new ArrayList<>();
         SubsonicResponse artistsResponse = SubsonicRestClient.execute(client.getApiService().getArtists(client.createAuthParams()));
         if (artistsResponse.artists != null && artistsResponse.artists.indexes != null) {
@@ -59,17 +69,19 @@ public class SubsonicSyncer {
                 artists.addAll(index.artists);
             }
             for (int i = 0; i < artists.size(); i++) {
-                publishProgress(context.getString(R.string.sync_progress_artist_x_of_y, i + 1, artists.size()));
+                publishProgress(context.getString(R.string.sync_progress_artist_x_of_y, i + 1, artists.size()),
+                        interpolateProgress(15, 75, i + 1, artists.size()));
                 loadArtistSongs(artists.get(i), visitedAlbums, songs);
             }
         }
 
-        publishProgress(context.getString(R.string.sync_progress_playlists));
+        publishProgress(context.getString(R.string.sync_progress_playlists), 78);
         SubsonicResponse playlistsResponse = SubsonicRestClient.execute(client.getApiService().getPlaylists(client.createAuthParams()));
         if (playlistsResponse.playlists != null && playlistsResponse.playlists.playlists != null) {
             List<SubsonicPlaylist> remotePlaylists = playlistsResponse.playlists.playlists;
             for (int i = 0; i < remotePlaylists.size(); i++) {
-                publishProgress(context.getString(R.string.sync_progress_playlist_x_of_y, i + 1, remotePlaylists.size()));
+                publishProgress(context.getString(R.string.sync_progress_playlist_x_of_y, i + 1, remotePlaylists.size()),
+                        interpolateProgress(78, 95, i + 1, remotePlaylists.size()));
                 SubsonicPlaylist playlist = remotePlaylists.get(i);
                 SubsonicLibraryStore.CachedPlaylist cachedPlaylist = loadPlaylist(playlist);
                 if (cachedPlaylist != null) {
@@ -78,15 +90,23 @@ public class SubsonicSyncer {
             }
         }
 
-        publishProgress(context.getString(R.string.sync_progress_saving));
+        publishProgress(context.getString(R.string.sync_progress_saving), 98);
         SubsonicLibraryStore.getInstance(context).replaceLibrary(server.id, songs, genres, playlists);
         SubsonicServerStore.getInstance(context).updateLastSynced(server.id, System.currentTimeMillis());
     }
 
-    private void publishProgress(@NonNull String message) {
+    private void publishProgress(@NonNull String message, int progress) {
+        SubsonicSyncState.update(server.id, message, progress);
         if (progressListener != null) {
             progressListener.onProgress(message);
         }
+    }
+
+    private int interpolateProgress(int start, int end, int current, int total) {
+        if (total <= 0) {
+            return end;
+        }
+        return start + Math.round((end - start) * (current / (float) total));
     }
 
     public interface ProgressListener {
