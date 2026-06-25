@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -178,6 +179,12 @@ public class SongAdapter extends AbsMultiSelectAdapter<SongAdapter.ViewHolder, S
     }
 
     @Override
+    public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
+        SongsMenuHelper.prepareSongsMenu(menu, !SongsMenuHelper.containsRemoteSongs(dataSet));
+        return super.onCabCreated(materialCab, menu);
+    }
+
+    @Override
     protected void onMultipleItemAction(@NonNull MenuItem menuItem, @NonNull List<Song> selection) {
         SongsMenuHelper.handleMenuClick(activity, selection, menuItem.getItemId());
     }
@@ -250,7 +257,7 @@ public class SongAdapter extends AbsMultiSelectAdapter<SongAdapter.ViewHolder, S
                         Pair[] albumPairs = new Pair[]{
                                 Pair.create(image, activity.getResources().getString(R.string.transition_album_art))
                         };
-                        NavigationUtil.goToAlbum(activity, getSong().albumId, albumPairs);
+                        NavigationUtil.goToAlbum(activity, SongMenuHelper.getSourceId(activity, getSong()), getSong().albumId, albumPairs);
                         return true;
                                 }
             }

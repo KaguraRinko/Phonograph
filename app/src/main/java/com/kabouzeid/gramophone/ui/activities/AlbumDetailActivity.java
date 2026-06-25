@@ -35,6 +35,7 @@ import com.kabouzeid.gramophone.dialogs.SleepTimerDialog;
 import com.kabouzeid.gramophone.glide.PhonographColoredTarget;
 import com.kabouzeid.gramophone.glide.SongGlideRequest;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
+import com.kabouzeid.gramophone.helper.menu.SongsMenuHelper;
 import com.kabouzeid.gramophone.interfaces.CabHolder;
 import com.kabouzeid.gramophone.interfaces.LoaderIds;
 import com.kabouzeid.gramophone.interfaces.PaletteColorHolder;
@@ -243,6 +244,11 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_album_detail, menu);
+        if (!supportsLocalActions()) {
+            hide(menu, R.id.action_add_to_playlist);
+            hide(menu, R.id.action_tag_editor);
+            hide(menu, R.id.action_delete_from_device);
+        }
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -292,6 +298,10 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
+        if (!supportsLocalActions()
+                && (id == R.id.action_add_to_playlist || id == R.id.action_tag_editor || id == R.id.action_delete_from_device)) {
+            return true;
+        }
         final List<Song> songs = adapter.getDataSet();
                 if (id == R.id.action_sleep_timer) {
                 new SleepTimerDialog().show(getSupportFragmentManager(), "SET_SLEEP_TIMER");
@@ -368,6 +378,7 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
                 .start(new MaterialCab.Callback() {
                     @Override
                     public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
+                        SongsMenuHelper.prepareSongsMenu(menu, supportsLocalActions());
                         return callback.onCabCreated(materialCab, menu);
                     }
 
@@ -382,6 +393,17 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
                     }
                 });
         return cab;
+    }
+
+    private boolean supportsLocalActions() {
+        return MediaSourceManager.isLocalSource(sourceId);
+    }
+
+    private void hide(@NonNull Menu menu, int itemId) {
+        MenuItem item = menu.findItem(itemId);
+        if (item != null) {
+            item.setVisible(false);
+        }
     }
 
     @Override

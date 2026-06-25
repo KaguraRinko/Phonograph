@@ -26,6 +26,7 @@ import com.kabouzeid.gramophone.adapter.song.PlaylistSongAdapter;
 import com.kabouzeid.gramophone.adapter.song.SongAdapter;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
 import com.kabouzeid.gramophone.helper.menu.PlaylistMenuHelper;
+import com.kabouzeid.gramophone.helper.menu.SongsMenuHelper;
 import com.kabouzeid.gramophone.interfaces.CabHolder;
 import com.kabouzeid.gramophone.interfaces.LoaderIds;
 import com.kabouzeid.gramophone.loader.PlaylistLoader;
@@ -96,7 +97,7 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
     private void setUpRecyclerView() {
         ViewUtil.setUpFastScrollRecyclerViewColor(this, ((FastScrollRecyclerView) recyclerView), ThemeStore.accentColor(this));
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        if (playlist instanceof AbsCustomPlaylist) {
+        if (playlist instanceof AbsCustomPlaylist || !supportsLocalActions()) {
             adapter = new PlaylistSongAdapter(this, new ArrayList<>(), R.layout.item_list, false, this);
             recyclerView.setAdapter(adapter);
         } else {
@@ -142,6 +143,7 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(playlist instanceof AbsCustomPlaylist ? R.menu.menu_smart_playlist_detail : R.menu.menu_playlist_detail, menu);
+        PlaylistMenuHelper.preparePlaylistMenu(menu, supportsLocalActions());
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -166,8 +168,28 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
                 .setMenu(menu)
                 .setCloseDrawableRes(R.drawable.ic_close_white_24dp)
                 .setBackgroundColor(PhonographColorUtil.shiftBackgroundColorForLightText(ThemeStore.primaryColor(this)))
-                .start(callback);
+                .start(new MaterialCab.Callback() {
+                    @Override
+                    public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
+                        SongsMenuHelper.prepareSongsMenu(menu, supportsLocalActions());
+                        return callback.onCabCreated(materialCab, menu);
+                    }
+
+                    @Override
+                    public boolean onCabItemClicked(MenuItem menuItem) {
+                        return callback.onCabItemClicked(menuItem);
+                    }
+
+                    @Override
+                    public boolean onCabFinished(MaterialCab materialCab) {
+                        return callback.onCabFinished(materialCab);
+                    }
+                });
         return cab;
+    }
+
+    private boolean supportsLocalActions() {
+        return MediaSourceManager.isLocalSource(sourceId);
     }
 
     @Override

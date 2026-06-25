@@ -42,6 +42,7 @@ import com.kabouzeid.gramophone.dialogs.SleepTimerDialog;
 import com.kabouzeid.gramophone.glide.ArtistGlideRequest;
 import com.kabouzeid.gramophone.glide.PhonographColoredTarget;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
+import com.kabouzeid.gramophone.helper.menu.SongsMenuHelper;
 import com.kabouzeid.gramophone.interfaces.CabHolder;
 import com.kabouzeid.gramophone.interfaces.LoaderIds;
 import com.kabouzeid.gramophone.interfaces.PaletteColorHolder;
@@ -314,12 +315,21 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_artist_detail, menu);
         menu.findItem(R.id.action_colored_footers).setChecked(usePalette);
+        if (!supportsLocalActions()) {
+            hide(menu, R.id.action_add_to_playlist);
+            hide(menu, R.id.action_set_artist_image);
+            hide(menu, R.id.action_reset_artist_image);
+        }
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
+        if (!supportsLocalActions()
+                && (id == R.id.action_add_to_playlist || id == R.id.action_set_artist_image || id == R.id.action_reset_artist_image)) {
+            return true;
+        }
         final List<Song> songs = songAdapter.getDataSet();
                 if (id == R.id.action_sleep_timer) {
                 new SleepTimerDialog().show(getSupportFragmentManager(), "SET_SLEEP_TIMER");
@@ -389,6 +399,7 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
                 .start(new MaterialCab.Callback() {
                     @Override
                     public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
+                        SongsMenuHelper.prepareSongsMenu(menu, supportsLocalActions());
                         return callback.onCabCreated(materialCab, menu);
                     }
 
@@ -403,6 +414,17 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
                     }
                 });
         return cab;
+    }
+
+    private boolean supportsLocalActions() {
+        return MediaSourceManager.isLocalSource(sourceId);
+    }
+
+    private void hide(@NonNull Menu menu, int itemId) {
+        MenuItem item = menu.findItem(itemId);
+        if (item != null) {
+            item.setVisible(false);
+        }
     }
 
     @Override

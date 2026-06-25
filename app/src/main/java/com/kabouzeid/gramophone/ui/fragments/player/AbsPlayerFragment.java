@@ -14,6 +14,7 @@ import com.kabouzeid.gramophone.dialogs.SleepTimerDialog;
 import com.kabouzeid.gramophone.dialogs.SongDetailDialog;
 import com.kabouzeid.gramophone.dialogs.SongShareDialog;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
+import com.kabouzeid.gramophone.helper.menu.SongMenuHelper;
 import com.kabouzeid.gramophone.interfaces.PaletteColorHolder;
 import com.kabouzeid.gramophone.model.Song;
 import com.kabouzeid.gramophone.ui.activities.tageditor.AbsTagEditorActivity;
@@ -46,6 +47,14 @@ public abstract class AbsPlayerFragment extends AbsMusicServiceFragment implemen
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         final Song song = MusicPlayerRemote.getCurrentSong();
+        if (SongMenuHelper.isRemoteSong(song)
+                && (item.getItemId() == R.id.action_toggle_favorite
+                || item.getItemId() == R.id.action_share
+                || item.getItemId() == R.id.action_add_to_playlist
+                || item.getItemId() == R.id.action_save_playing_queue
+                || item.getItemId() == R.id.action_tag_editor)) {
+            return false;
+        }
                 if (item.getItemId() == R.id.action_sleep_timer) {
                 new SleepTimerDialog().show(getFragmentManager(), "SET_SLEEP_TIMER");
                 return true;
@@ -76,10 +85,10 @@ public abstract class AbsPlayerFragment extends AbsMusicServiceFragment implemen
                 SongDetailDialog.create(song).show(getFragmentManager(), "SONG_DETAIL");
                 return true;
                     } else if (item.getItemId() == R.id.action_go_to_album) {
-                NavigationUtil.goToAlbum(getActivity(), song.albumId);
+                NavigationUtil.goToAlbum(getActivity(), SongMenuHelper.getSourceId(getActivity(), song), song.albumId);
                 return true;
                     } else if (item.getItemId() == R.id.action_go_to_artist) {
-                NavigationUtil.goToArtist(getActivity(), song.artistId);
+                NavigationUtil.goToArtist(getActivity(), SongMenuHelper.getSourceId(getActivity(), song), song.artistId);
                 return true;
                 }
         return false;

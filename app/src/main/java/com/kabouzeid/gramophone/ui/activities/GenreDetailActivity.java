@@ -19,6 +19,7 @@ import com.kabouzeid.appthemehelper.ThemeStore;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.adapter.song.SongAdapter;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
+import com.kabouzeid.gramophone.helper.menu.SongsMenuHelper;
 import com.kabouzeid.gramophone.interfaces.CabHolder;
 import com.kabouzeid.gramophone.interfaces.LoaderIds;
 import com.kabouzeid.gramophone.loader.GenreLoader;
@@ -132,7 +133,23 @@ public class GenreDetailActivity extends AbsSlidingMusicPanelActivity implements
                 .setMenu(menu)
                 .setCloseDrawableRes(R.drawable.ic_close_white_24dp)
                 .setBackgroundColor(PhonographColorUtil.shiftBackgroundColorForLightText(ThemeStore.primaryColor(this)))
-                .start(callback);
+                .start(new MaterialCab.Callback() {
+                    @Override
+                    public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
+                        SongsMenuHelper.prepareSongsMenu(menu, MediaSourceManager.isLocalSource(sourceId));
+                        return callback.onCabCreated(materialCab, menu);
+                    }
+
+                    @Override
+                    public boolean onCabItemClicked(MenuItem menuItem) {
+                        return callback.onCabItemClicked(menuItem);
+                    }
+
+                    @Override
+                    public boolean onCabFinished(MaterialCab materialCab) {
+                        return callback.onCabFinished(materialCab);
+                    }
+                });
         return cab;
     }
 

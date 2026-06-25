@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +32,8 @@ import com.kabouzeid.gramophone.model.Playlist;
 import com.kabouzeid.gramophone.model.Song;
 import com.kabouzeid.gramophone.model.smartplaylist.AbsSmartPlaylist;
 import com.kabouzeid.gramophone.model.smartplaylist.LastAddedPlaylist;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
+import com.kabouzeid.gramophone.ui.cab.MaterialCab;
 import com.kabouzeid.gramophone.util.MusicUtil;
 import com.kabouzeid.gramophone.util.NavigationUtil;
 import com.kabouzeid.gramophone.util.PlaylistsUtil;
@@ -137,7 +140,17 @@ public class PlaylistAdapter extends AbsMultiSelectAdapter<PlaylistAdapter.ViewH
     }
 
     @Override
+    public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
+        PlaylistMenuHelper.preparePlaylistMenu(menu, MediaSourceManager.isCurrentSourceLocal(activity));
+        return super.onCabCreated(materialCab, menu);
+    }
+
+    @Override
     protected void onMultipleItemAction(@NonNull MenuItem menuItem, @NonNull List<Playlist> selection) {
+        if (!MediaSourceManager.isCurrentSourceLocal(activity)
+                && (menuItem.getItemId() == R.id.action_delete_playlist || menuItem.getItemId() == R.id.action_save_playlist)) {
+            return;
+        }
                 if (menuItem.getItemId() == R.id.action_delete_playlist) {
                 for (int i = 0; i < selection.size(); i++) {
                     Playlist playlist = selection.get(i);
@@ -205,6 +218,8 @@ public class PlaylistAdapter extends AbsMultiSelectAdapter<PlaylistAdapter.ViewH
         for (Playlist playlist : playlists) {
             if (playlist instanceof AbsCustomPlaylist) {
                 songs.addAll(((AbsCustomPlaylist) playlist).getSongs(activity));
+            } else if (!MediaSourceManager.isCurrentSourceLocal(activity)) {
+                songs.addAll(MediaSourceManager.getCurrentRepository(activity).getSongsForPlaylist(activity, playlist));
             } else {
                 songs.addAll(PlaylistSongLoader.getPlaylistSongList(activity, playlist.id));
             }
@@ -238,6 +253,7 @@ public class PlaylistAdapter extends AbsMultiSelectAdapter<PlaylistAdapter.ViewH
                     final Playlist playlist = dataSet.get(getAdapterPosition());
                     final PopupMenu popupMenu = new PopupMenu(activity, view);
                     popupMenu.inflate(getItemViewType() == SMART_PLAYLIST ? R.menu.menu_item_smart_playlist : R.menu.menu_item_playlist);
+                    PlaylistMenuHelper.preparePlaylistMenu(popupMenu.getMenu(), MediaSourceManager.isCurrentSourceLocal(activity));
                     if (playlist instanceof LastAddedPlaylist) {
                         popupMenu.getMenu().findItem(R.id.action_clear_playlist).setVisible(false);
                     }

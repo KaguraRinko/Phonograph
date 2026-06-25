@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -18,6 +19,7 @@ import com.kabouzeid.gramophone.misc.WeakContextAsyncTask;
 import com.kabouzeid.gramophone.model.AbsCustomPlaylist;
 import com.kabouzeid.gramophone.model.Playlist;
 import com.kabouzeid.gramophone.model.Song;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.util.PlaylistsUtil;
 
 import java.io.IOException;
@@ -29,6 +31,10 @@ import java.util.List;
  */
 public class PlaylistMenuHelper {
     public static boolean handleMenuClick(@NonNull AppCompatActivity activity, @NonNull final Playlist playlist, @NonNull MenuItem item) {
+        boolean supportsLocalActions = MediaSourceManager.isCurrentSourceLocal(activity);
+        if (!supportsLocalActions && isLocalOnlyPlaylistAction(item.getItemId())) {
+            return false;
+        }
                 if (item.getItemId() == R.id.action_play) {
                 MusicPlayerRemote.openQueue(new ArrayList<>(getPlaylistSongs(activity, playlist)), 0, true);
                 return true;
@@ -54,11 +60,40 @@ public class PlaylistMenuHelper {
         return false;
     }
 
+    public static void preparePlaylistMenu(@NonNull Menu menu, boolean supportsLocalActions) {
+        if (supportsLocalActions) {
+            return;
+        }
+        hide(menu, R.id.action_add_to_playlist);
+        hide(menu, R.id.action_rename_playlist);
+        hide(menu, R.id.action_delete_playlist);
+        hide(menu, R.id.action_save_playlist);
+        hide(menu, R.id.action_clear_playlist);
+    }
+
     @NonNull
     private static List<? extends Song> getPlaylistSongs(@NonNull Activity activity, Playlist playlist) {
+        if (!MediaSourceManager.isCurrentSourceLocal(activity)) {
+            return MediaSourceManager.getCurrentRepository(activity).getSongsForPlaylist(activity, playlist);
+        }
         return playlist instanceof AbsCustomPlaylist ?
                 ((AbsCustomPlaylist) playlist).getSongs(activity) :
                 PlaylistSongLoader.getPlaylistSongList(activity, playlist.id);
+    }
+
+    private static boolean isLocalOnlyPlaylistAction(int itemId) {
+        return itemId == R.id.action_add_to_playlist
+                || itemId == R.id.action_rename_playlist
+                || itemId == R.id.action_delete_playlist
+                || itemId == R.id.action_save_playlist
+                || itemId == R.id.action_clear_playlist;
+    }
+
+    private static void hide(@NonNull Menu menu, int itemId) {
+        MenuItem item = menu.findItem(itemId);
+        if (item != null) {
+            item.setVisible(false);
+        }
     }
 
 

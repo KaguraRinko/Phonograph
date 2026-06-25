@@ -270,6 +270,14 @@ public class CardPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
 
     private void updateIsFavorite() {
         if (updateIsFavoriteTask != null) updateIsFavoriteTask.cancel(false);
+        MenuItem favoriteItem = toolbar.getMenu().findItem(R.id.action_toggle_favorite);
+        Song song = MusicPlayerRemote.getCurrentSong();
+        if (favoriteItem != null && SongMenuHelper.isRemoteSong(song)) {
+            favoriteItem.setVisible(false);
+            return;
+        } else if (favoriteItem != null) {
+            favoriteItem.setVisible(true);
+        }
         updateIsFavoriteTask = new AsyncTask<Song, Void, Boolean>() {
             @Override
             protected Boolean doInBackground(Song... params) {
@@ -294,12 +302,18 @@ public class CardPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
                             .setTitle(isFavorite ? getString(R.string.action_remove_from_favorites) : getString(R.string.action_add_to_favorites));
                 }
             }
-        }.execute(MusicPlayerRemote.getCurrentSong());
+        }.execute(song);
     }
 
     private void updateLyrics() {
         if (updateLyricsAsyncTask != null) updateLyricsAsyncTask.cancel(false);
         final Song song = MusicPlayerRemote.getCurrentSong();
+        if (SongMenuHelper.isRemoteSong(song)) {
+            lyrics = null;
+            playerAlbumCoverFragment.setLyrics(null);
+            toolbar.getMenu().removeItem(R.id.action_show_lyrics);
+            return;
+        }
         updateLyricsAsyncTask = new AsyncTask<Void, Void, Lyrics>() {
             @Override
             protected void onPreExecute() {
