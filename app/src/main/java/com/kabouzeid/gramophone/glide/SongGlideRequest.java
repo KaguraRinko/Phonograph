@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.RequestBuilder;
@@ -16,6 +17,9 @@ import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.glide.audiocover.AudioFileCover;
 import com.kabouzeid.gramophone.glide.palette.BitmapPaletteWrapper;
 import com.kabouzeid.gramophone.model.Song;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
+import com.kabouzeid.gramophone.subsonic.SubsonicServer;
+import com.kabouzeid.gramophone.subsonic.SubsonicUri;
 import com.kabouzeid.gramophone.util.MusicUtil;
 import com.kabouzeid.gramophone.util.PreferenceUtil;
 
@@ -32,6 +36,8 @@ public class SongGlideRequest {
         final RequestManager requestManager;
         final Song song;
         boolean ignoreMediaStore;
+        @Nullable
+        Context context;
 
         public static Builder from(@NonNull RequestManager requestManager, Song song) {
             return new Builder(requestManager, song);
@@ -43,6 +49,7 @@ public class SongGlideRequest {
         }
 
         public PaletteBuilder generatePalette(Context context) {
+            this.context = context.getApplicationContext();
             return new PaletteBuilder(this, context);
         }
 
@@ -51,6 +58,7 @@ public class SongGlideRequest {
         }
 
         public Builder checkIgnoreMediaStore(Context context) {
+            this.context = context.getApplicationContext();
             return ignoreMediaStore(PreferenceUtil.getInstance(context).ignoreMediaStoreArtwork());
         }
 
@@ -60,7 +68,7 @@ public class SongGlideRequest {
         }
 
         public RequestBuilder<Drawable> build() {
-            return createBaseRequest(requestManager.load(getLoadModel(song, ignoreMediaStore)), song)
+            return createBaseRequest(requestManager.load(getLoadModel(context, song, ignoreMediaStore)), song)
                     .transition(DrawableTransitionOptions.withCrossFade());
         }
     }
@@ -73,7 +81,7 @@ public class SongGlideRequest {
         }
 
         public RequestBuilder<Bitmap> build() {
-            return createBaseRequest(builder.requestManager.asBitmap().load(getLoadModel(builder.song, builder.ignoreMediaStore)), builder.song);
+            return createBaseRequest(builder.requestManager.asBitmap().load(getLoadModel(builder.context, builder.song, builder.ignoreMediaStore)), builder.song);
         }
     }
 
@@ -88,16 +96,33 @@ public class SongGlideRequest {
 
         public RequestBuilder<BitmapPaletteWrapper> build() {
             return createBaseRequest(builder.requestManager.as(BitmapPaletteWrapper.class)
-                    .load(getLoadModel(builder.song, builder.ignoreMediaStore)), builder.song);
+                    .load(getLoadModel(builder.context, builder.song, builder.ignoreMediaStore)), builder.song);
         }
     }
 
-    private static Object getLoadModel(Song song, boolean ignoreMediaStore) {
+    private static Object getLoadModel(@Nullable Context context, Song song, boolean ignoreMediaStore) {
+        String remoteCoverArtUri = getRemoteCoverArtUri(context, song);
+        if (remoteCoverArtUri != null) {
+            return remoteCoverArtUri;
+        }
         if (ignoreMediaStore) {
             return new AudioFileCover(song.data);
         } else {
             return MusicUtil.getMediaStoreAlbumCoverUri(song.albumId);
         }
+    }
+
+    @Nullable
+    private static String getRemoteCoverArtUri(@Nullable Context context, @Nullable Song song) {
+        if (context == null || song == null || !SubsonicUri.isSubsonicUri(song.data)) {
+            return null;
+        }
+        long serverId = SubsonicUri.getServerId(song.data);
+        String sourceId = MediaSourceManager.toSubsonicSourceId(serverId);
+        if (serverId == SubsonicServer.NO_ID || MediaSourceManager.getSource(context, sourceId) == null) {
+            return null;
+        }
+        return MediaSourceManager.getRepository(context, sourceId).resolveCoverArtUri(context, song);
     }
 
     private static <T> RequestBuilder<T> createBaseRequest(RequestBuilder<T> requestBuilder, Song song) {
