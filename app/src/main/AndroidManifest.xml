@@ -116,6 +116,9 @@
             android:name=".ui.activities.SettingsActivity"
             android:label="@string/action_settings" />
         <activity
+            android:name=".ui.activities.SubsonicServersActivity"
+            android:label="@string/subsonic_servers" />
+        <activity
             android:name=".ui.activities.AboutActivity"
             android:label="@string/action_about" />
         <activity

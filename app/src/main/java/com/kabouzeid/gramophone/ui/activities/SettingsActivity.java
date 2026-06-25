@@ -130,6 +130,7 @@ public class SettingsActivity extends AbsBaseActivity implements ColorChooserDia
             addPreferencesFromResource(R.xml.pref_notification);
             addPreferencesFromResource(R.xml.pref_now_playing_screen);
             addPreferencesFromResource(R.xml.pref_images);
+            addPreferencesFromResource(R.xml.pref_subsonic);
             addPreferencesFromResource(R.xml.pref_lockscreen);
             addPreferencesFromResource(R.xml.pref_audio);
             addPreferencesFromResource(R.xml.pref_playlists);
@@ -297,6 +298,12 @@ public class SettingsActivity extends AbsBaseActivity implements ColorChooserDia
             }
             equalizer.setOnPreferenceClickListener(preference -> {
                 NavigationUtil.openEqualizer(getActivity());
+                return true;
+            });
+
+            final Preference subsonicServers = findPreference("subsonic_servers");
+            subsonicServers.setOnPreferenceClickListener(preference -> {
+                startActivity(new Intent(getActivity(), SubsonicServersActivity.class));
                 return true;
             });
 

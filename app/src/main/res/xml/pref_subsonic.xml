@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.kabouzeid.appthemehelper.common.prefs.supportv7.ATEPreferenceCategory android:title="@string/subsonic">
+
+        <com.kabouzeid.appthemehelper.common.prefs.supportv7.ATEPreference
+            app:iconSpaceReserved="false"
+            android:key="subsonic_servers"
+            android:summary="@string/pref_summary_subsonic_servers"
+            android:title="@string/subsonic_servers" />
+
+    </com.kabouzeid.appthemehelper.common.prefs.supportv7.ATEPreferenceCategory>
+
+</androidx.preference.PreferenceScreen>
