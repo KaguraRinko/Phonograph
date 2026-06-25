@@ -19,6 +19,7 @@ import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
 import com.kabouzeid.gramophone.interfaces.MusicServiceEventListener;
 import com.kabouzeid.gramophone.service.MusicService;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -224,5 +225,21 @@ public abstract class AbsMusicServiceActivity extends AbsBaseActivity implements
             return new String[]{Manifest.permission.READ_MEDIA_AUDIO};
         }
         return new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
+    }
+
+    @Override
+    protected void requestPermissions() {
+        if (!canSkipLocalMediaPermission()) {
+            super.requestPermissions();
+        }
+    }
+
+    @Override
+    protected boolean hasPermissions() {
+        return canSkipLocalMediaPermission() || super.hasPermissions();
+    }
+
+    protected boolean canSkipLocalMediaPermission() {
+        return !MediaSourceManager.isCurrentSourceLocal(this);
     }
 }

@@ -85,6 +85,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
     private ActivityResultLauncher<Uri> scanMediaFolderLauncher;
 
     private boolean blockRequestPermissions;
+    private boolean completedInitialSetup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +118,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
         }
 
         requestNotificationPermissionIfNeeded();
+        completedInitialSetup = true;
     }
 
     private void requestNotificationPermissionIfNeeded() {
@@ -136,6 +138,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
             case FOLDERS:
                 MediaSourceManager.setCurrentSourceId(this, MediaSourceManager.LOCAL_SOURCE_ID);
                 refreshMediaSourceMenu();
+                requestLocalMediaPermissionsIfNeeded();
                 navigationView.setCheckedItem(R.id.nav_folders);
                 setCurrentFragment(FoldersFragment.newInstance(this));
                 break;
@@ -149,7 +152,16 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
         PreferenceUtil.getInstance(this).setLastMusicChooser(LIBRARY);
         MediaSourceManager.setCurrentSourceId(this, sourceId);
         refreshMediaSourceMenu();
+        if (MediaSourceManager.isLocalSource(sourceId)) {
+            requestLocalMediaPermissionsIfNeeded();
+        }
         setCurrentFragment(LibraryFragment.newInstance());
+    }
+
+    private void requestLocalMediaPermissionsIfNeeded() {
+        if (completedInitialSetup && !hasPermissions()) {
+            requestPermissions();
+        }
     }
 
     private void setCurrentFragment(@SuppressWarnings("NullableProblems") Fragment fragment) {
