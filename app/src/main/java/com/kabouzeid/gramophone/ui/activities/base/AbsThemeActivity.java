@@ -30,6 +30,7 @@ public abstract class AbsThemeActivity extends ATHToolbarActivity {
         setTheme(PreferenceUtil.getInstance(this).getGeneralTheme());
         super.onCreate(savedInstanceState);
         MaterialDialogsUtil.updateMaterialDialogsThemeSingleton(this);
+        applyImmersiveNavigationBar(ThemeStore.navigationBarColor(this));
     }
 
     @Override
@@ -122,6 +123,10 @@ public abstract class AbsThemeActivity extends ATHToolbarActivity {
     }
 
     public void setNavigationbarColor(int color) {
+        if (Build.VERSION.SDK_INT >= 35) {
+            applyImmersiveNavigationBar(color);
+            return;
+        }
         if (ThemeStore.coloredNavigationBar(this)) {
             ATH.setNavigationbarColor(this, color);
         } else {
@@ -139,5 +144,29 @@ public abstract class AbsThemeActivity extends ATHToolbarActivity {
 
     public void setLightStatusbarAuto(int bgColor) {
         setLightStatusbar(ColorUtil.isColorLight(bgColor));
+    }
+
+    private void applyImmersiveNavigationBar(@ColorInt int iconContrastColor) {
+        if (Build.VERSION.SDK_INT < 35) {
+            return;
+        }
+
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
+
+        View decorView = getWindow().getDecorView();
+        int flags = decorView.getSystemUiVisibility()
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (ColorUtil.isColorLight(iconContrastColor)) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            } else {
+                flags &= ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            }
+        }
+        decorView.setSystemUiVisibility(flags);
     }
 }
