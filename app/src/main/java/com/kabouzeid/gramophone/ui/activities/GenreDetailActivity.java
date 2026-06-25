@@ -33,8 +33,6 @@ import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class GenreDetailActivity extends AbsSlidingMusicPanelActivity implements CabHolder, LoaderManager.LoaderCallbacks<List<Song>> {
 
@@ -42,11 +40,8 @@ public class GenreDetailActivity extends AbsSlidingMusicPanelActivity implements
 
     public static final String EXTRA_GENRE = "extra_genre";
 
-    @BindView(R.id.recycler_view)
     RecyclerView recyclerView;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(android.R.id.empty)
     TextView empty;
 
     private Genre genre;
@@ -60,7 +55,9 @@ public class GenreDetailActivity extends AbsSlidingMusicPanelActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setDrawUnderStatusbar();
-        ButterKnife.bind(this);
+        recyclerView = findViewById(R.id.recycler_view);
+        toolbar = findViewById(R.id.toolbar);
+        empty = findViewById(android.R.id.empty);
 
         setStatusbarColorAuto();
         setNavigationbarColorAuto();

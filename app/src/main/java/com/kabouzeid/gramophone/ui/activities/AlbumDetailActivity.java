@@ -57,8 +57,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -75,32 +73,19 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
 
     private Album album;
 
-    @BindView(R.id.list)
     ObservableRecyclerView recyclerView;
-    @BindView(R.id.image)
     ImageView albumArtImageView;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(R.id.header)
     View headerView;
-    @BindView(R.id.header_overlay)
     View headerOverlay;
 
-    @BindView(R.id.artist_icon)
     ImageView artistIconImageView;
-    @BindView(R.id.duration_icon)
     ImageView durationIconImageView;
-    @BindView(R.id.song_count_icon)
     ImageView songCountIconImageView;
-    @BindView(R.id.album_year_icon)
     ImageView albumYearIconImageView;
-    @BindView(R.id.artist_text)
     TextView artistTextView;
-    @BindView(R.id.duration_text)
     TextView durationTextView;
-    @BindView(R.id.song_count_text)
     TextView songCountTextView;
-    @BindView(R.id.album_year_text)
     TextView albumYearTextView;
 
     private AlbumSongAdapter adapter;
@@ -118,7 +103,19 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setDrawUnderStatusbar();
-        ButterKnife.bind(this);
+        recyclerView = findViewById(R.id.list);
+        albumArtImageView = findViewById(R.id.image);
+        toolbar = findViewById(R.id.toolbar);
+        headerView = findViewById(R.id.header);
+        headerOverlay = findViewById(R.id.header_overlay);
+        artistIconImageView = findViewById(R.id.artist_icon);
+        durationIconImageView = findViewById(R.id.duration_icon);
+        songCountIconImageView = findViewById(R.id.song_count_icon);
+        albumYearIconImageView = findViewById(R.id.album_year_icon);
+        artistTextView = findViewById(R.id.artist_text);
+        durationTextView = findViewById(R.id.duration_text);
+        songCountTextView = findViewById(R.id.song_count_text);
+        albumYearTextView = findViewById(R.id.album_year_text);
 
         lastFMRestClient = new LastFMRestClient(this);
 

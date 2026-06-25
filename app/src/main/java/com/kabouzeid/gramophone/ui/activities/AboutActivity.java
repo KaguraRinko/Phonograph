@@ -23,8 +23,6 @@ import com.kabouzeid.gramophone.ui.activities.base.AbsBaseActivity;
 import com.kabouzeid.gramophone.ui.activities.bugreport.BugReportActivity;
 import com.kabouzeid.gramophone.ui.activities.intro.AppIntroActivity;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import de.psdev.licensesdialog.LicensesDialog;
 
 /**
@@ -55,45 +53,25 @@ public class AboutActivity extends AbsBaseActivity implements View.OnClickListen
 
     private static String ADRIAN_TWITTER = "https://twitter.com/froschgames";
 
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(R.id.app_version)
     TextView appVersion;
-    @BindView(R.id.changelog)
     LinearLayout changelog;
-    @BindView(R.id.intro)
     LinearLayout intro;
-    @BindView(R.id.licenses)
     LinearLayout licenses;
-    @BindView(R.id.write_an_email)
     LinearLayout writeAnEmail;
-    @BindView(R.id.follow_on_twitter)
     LinearLayout followOnTwitter;
-    @BindView(R.id.fork_on_github)
     LinearLayout forkOnGitHub;
-    @BindView(R.id.visit_website)
     LinearLayout visitWebsite;
-    @BindView(R.id.report_bugs)
     LinearLayout reportBugs;
-    @BindView(R.id.translate)
     LinearLayout translate;
-    @BindView(R.id.rate_on_google_play)
     LinearLayout rateOnGooglePlay;
-    @BindView(R.id.aidan_follestad_git_hub)
     AppCompatButton aidanFollestadGitHub;
-    @BindView(R.id.michael_cook_website)
     AppCompatButton michaelCookWebsite;
-    @BindView(R.id.maarten_corpel_website)
     AppCompatButton maartenCorpelWebsite;
-    @BindView(R.id.maarten_corpel_twitter)
     AppCompatButton maartenCorpelTwitter;
-    @BindView(R.id.aleksandar_tesic_twitter)
     AppCompatButton aleksandarTesicTwitter;
-    @BindView(R.id.eugene_cheung_git_hub)
     AppCompatButton eugeneCheungGitHub;
-    @BindView(R.id.eugene_cheung_website)
     AppCompatButton eugeneCheungWebsite;
-    @BindView(R.id.adrian_twitter)
     AppCompatButton adrianTwitter;
 
     @Override
@@ -101,7 +79,26 @@ public class AboutActivity extends AbsBaseActivity implements View.OnClickListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_about);
         setDrawUnderStatusbar();
-        ButterKnife.bind(this);
+        toolbar = findViewById(R.id.toolbar);
+        appVersion = findViewById(R.id.app_version);
+        changelog = findViewById(R.id.changelog);
+        intro = findViewById(R.id.intro);
+        licenses = findViewById(R.id.licenses);
+        writeAnEmail = findViewById(R.id.write_an_email);
+        followOnTwitter = findViewById(R.id.follow_on_twitter);
+        forkOnGitHub = findViewById(R.id.fork_on_github);
+        visitWebsite = findViewById(R.id.visit_website);
+        reportBugs = findViewById(R.id.report_bugs);
+        translate = findViewById(R.id.translate);
+        rateOnGooglePlay = findViewById(R.id.rate_on_google_play);
+        aidanFollestadGitHub = findViewById(R.id.aidan_follestad_git_hub);
+        michaelCookWebsite = findViewById(R.id.michael_cook_website);
+        maartenCorpelWebsite = findViewById(R.id.maarten_corpel_website);
+        maartenCorpelTwitter = findViewById(R.id.maarten_corpel_twitter);
+        aleksandarTesicTwitter = findViewById(R.id.aleksandar_tesic_twitter);
+        eugeneCheungGitHub = findViewById(R.id.eugene_cheung_git_hub);
+        eugeneCheungWebsite = findViewById(R.id.eugene_cheung_website);
+        adrianTwitter = findViewById(R.id.adrian_twitter);
 
         setStatusbarColorAuto();
         setNavigationbarColorAuto();

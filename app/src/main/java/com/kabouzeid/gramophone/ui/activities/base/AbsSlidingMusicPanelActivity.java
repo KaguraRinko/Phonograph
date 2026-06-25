@@ -25,8 +25,6 @@ import com.kabouzeid.gramophone.util.PreferenceUtil;
 import com.kabouzeid.gramophone.util.ViewUtil;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 /**
  * @author Karim Abou Zeid (kabouzeid)
@@ -36,7 +34,6 @@ import butterknife.ButterKnife;
  */
 public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivity implements SlidingUpPanelLayout.PanelSlideListener, CardPlayerFragment.Callbacks {
 
-    @BindView(R.id.sliding_layout)
     SlidingUpPanelLayout slidingUpPanelLayout;
 
     private int navigationbarColor;
@@ -54,7 +51,7 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(createContentView());
-        ButterKnife.bind(this);
+        slidingUpPanelLayout = findViewById(R.id.sliding_layout);
 
         currentNowPlayingScreen = PreferenceUtil.getInstance(this).getNowPlayingScreen();
         Fragment fragment; // must implement AbsPlayerFragment

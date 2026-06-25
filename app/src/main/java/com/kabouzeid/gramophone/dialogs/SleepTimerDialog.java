@@ -27,18 +27,13 @@ import com.kabouzeid.gramophone.util.PendingIntentUtil;
 import com.kabouzeid.gramophone.util.PreferenceUtil;
 import com.triggertrap.seekarc.SeekArc;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 /**
  * @author Karim Abou Zeid (kabouzeid)
  */
 public class SleepTimerDialog extends DialogFragment {
-    @BindView(R.id.seek_arc)
     SeekArc seekArc;
-    @BindView(R.id.timer_display)
     TextView timerDisplay;
-    @BindView(R.id.should_finish_last_song)
     CheckBox shouldFinishLastSong;
 
     private int seekArcProgress;
@@ -106,7 +101,9 @@ public class SleepTimerDialog extends DialogFragment {
             return materialDialog;
         }
 
-        ButterKnife.bind(this, materialDialog.getCustomView());
+        seekArc = materialDialog.getCustomView().findViewById(R.id.seek_arc);
+        timerDisplay = materialDialog.getCustomView().findViewById(R.id.timer_display);
+        shouldFinishLastSong = materialDialog.getCustomView().findViewById(R.id.should_finish_last_song);
 
         boolean finishMusic = PreferenceUtil.getInstance(getActivity()).getSleepTimerFinishMusic();
         shouldFinishLastSong.setChecked(finishMusic);

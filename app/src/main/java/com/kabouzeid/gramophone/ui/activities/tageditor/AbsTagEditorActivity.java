@@ -53,8 +53,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 /**
  * @author Karim Abou Zeid (kabouzeid)
@@ -65,15 +63,10 @@ public abstract class AbsTagEditorActivity extends AbsBaseActivity {
     public static final String EXTRA_PALETTE = "extra_palette";
     private static final String TAG = AbsTagEditorActivity.class.getSimpleName();
     private static final int REQUEST_CODE_SELECT_IMAGE = 1000;
-    @BindView(R.id.play_pause_fab)
     FloatingActionButton fab;
-    @BindView(R.id.observableScrollView)
     ObservableScrollView observableScrollView;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(R.id.image)
     ImageView image;
-    @BindView(R.id.header)
     LinearLayout header;
     private long id;
     private int headerVariableSpace;
@@ -99,7 +92,11 @@ public abstract class AbsTagEditorActivity extends AbsBaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getContentViewLayout());
-        ButterKnife.bind(this);
+        fab = findViewById(R.id.play_pause_fab);
+        observableScrollView = findViewById(R.id.observableScrollView);
+        toolbar = findViewById(R.id.toolbar);
+        image = findViewById(R.id.image);
+        header = findViewById(R.id.header);
 
         getIntentExtras();
 

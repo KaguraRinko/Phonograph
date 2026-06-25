@@ -50,8 +50,6 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class MainActivity extends AbsSlidingMusicPanelActivity {
 
@@ -62,9 +60,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
     private static final int LIBRARY = 0;
     private static final int FOLDERS = 1;
 
-    @BindView(R.id.navigation_view)
     NavigationView navigationView;
-    @BindView(R.id.drawer_layout)
     DrawerLayout drawerLayout;
 
     @Nullable
@@ -79,7 +75,8 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setDrawUnderStatusbar();
-        ButterKnife.bind(this);
+        navigationView = findViewById(R.id.navigation_view);
+        drawerLayout = findViewById(R.id.drawer_layout);
 
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.KITKAT) {
             navigationView.setFitsSystemWindows(false); // for header to go below statusbar

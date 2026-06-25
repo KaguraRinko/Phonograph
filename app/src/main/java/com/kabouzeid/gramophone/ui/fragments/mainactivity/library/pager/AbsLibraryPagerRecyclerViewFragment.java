@@ -18,23 +18,16 @@ import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.util.ViewUtil;
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
 
 /**
  * @author Karim Abou Zeid (kabouzeid)
  */
 public abstract class AbsLibraryPagerRecyclerViewFragment<A extends RecyclerView.Adapter, LM extends RecyclerView.LayoutManager> extends AbsLibraryPagerFragment implements OnOffsetChangedListener {
 
-    private Unbinder unbinder;
 
-    @BindView(R.id.container)
     View container;
-    @BindView(R.id.recycler_view)
     RecyclerView recyclerView;
     @Nullable
-    @BindView(android.R.id.empty)
     TextView empty;
 
     private A adapter;
@@ -43,7 +36,9 @@ public abstract class AbsLibraryPagerRecyclerViewFragment<A extends RecyclerView
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(getLayoutRes(), container, false);
-        unbinder = ButterKnife.bind(this, view);
+        container = view.findViewById(R.id.container);
+        recyclerView = view.findViewById(R.id.recycler_view);
+        empty = view.findViewById(android.R.id.empty);
         return view;
     }
 
@@ -135,6 +130,5 @@ public abstract class AbsLibraryPagerRecyclerViewFragment<A extends RecyclerView
     public void onDestroyView() {
         super.onDestroyView();
         getLibraryFragment().removeOnAppBarOffsetChangedListener(this);
-        unbinder.unbind();
     }
 }

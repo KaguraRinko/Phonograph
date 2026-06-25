@@ -37,21 +37,15 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class AlbumTagEditorActivity extends AbsTagEditorActivity implements TextWatcher {
 
-    @BindView(R.id.title)
     EditText albumTitle;
-    @BindView(R.id.album_artist)
     EditText albumArtist;
-    @BindView(R.id.genre)
     EditText genre;
-    @BindView(R.id.year)
     EditText year;
 
     private Bitmap albumArtBitmap;
@@ -61,7 +55,10 @@ public class AlbumTagEditorActivity extends AbsTagEditorActivity implements Text
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ButterKnife.bind(this);
+        albumTitle = findViewById(R.id.title);
+        albumArtist = findViewById(R.id.album_artist);
+        genre = findViewById(R.id.genre);
+        year = findViewById(R.id.year);
 
         lastFMRestClient = new LastFMRestClient(this);
 

@@ -53,27 +53,17 @@ import com.kabouzeid.gramophone.util.ViewUtil;
 import com.kabouzeid.gramophone.views.WidthFitSquareLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
 
 public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbumCoverFragment.Callbacks, SlidingUpPanelLayout.PanelSlideListener {
 
-    private Unbinder unbinder;
 
-    @BindView(R.id.player_status_bar)
     View playerStatusBar;
     @Nullable
-    @BindView(R.id.toolbar_container)
     FrameLayout toolbarContainer;
-    @BindView(R.id.player_toolbar)
     Toolbar toolbar;
     @Nullable
-    @BindView(R.id.player_sliding_layout)
     SlidingUpPanelLayout slidingUpPanelLayout;
-    @BindView(R.id.player_recycler_view)
     RecyclerView recyclerView;
-    @BindView(R.id.player_queue_sub_header)
     TextView playerQueueSubHeader;
 
     private int lastColor;
@@ -104,7 +94,12 @@ public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
         }
 
         View view = inflater.inflate(R.layout.fragment_flat_player, container, false);
-        unbinder = ButterKnife.bind(this, view);
+        playerStatusBar = view.findViewById(R.id.player_status_bar);
+        toolbarContainer = view.findViewById(R.id.toolbar_container);
+        toolbar = view.findViewById(R.id.player_toolbar);
+        slidingUpPanelLayout = view.findViewById(R.id.player_sliding_layout);
+        recyclerView = view.findViewById(R.id.player_recycler_view);
+        playerQueueSubHeader = view.findViewById(R.id.player_queue_sub_header);
         return view;
     }
 
@@ -156,7 +151,6 @@ public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
         playingQueueAdapter = null;
         layoutManager = null;
         super.onDestroyView();
-        unbinder.unbind();
     }
 
     @Override

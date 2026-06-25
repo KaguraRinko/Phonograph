@@ -20,8 +20,6 @@ import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -71,28 +69,17 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
 
     public static final String EXTRA_ARTIST_ID = "extra_artist_id";
 
-    @BindView(R.id.list)
     ObservableListView songListView;
-    @BindView(R.id.image)
     ImageView artistImage;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(R.id.header)
     View headerView;
-    @BindView(R.id.header_overlay)
     View headerOverlay;
 
-    @BindView(R.id.duration_icon)
     ImageView durationIconImageView;
-    @BindView(R.id.song_count_icon)
     ImageView songCountIconImageView;
-    @BindView(R.id.album_count_icon)
     ImageView albumCountIconImageView;
-    @BindView(R.id.duration_text)
     TextView durationTextView;
-    @BindView(R.id.song_count_text)
     TextView songCountTextView;
-    @BindView(R.id.album_count_text)
     TextView albumCountTextView;
 
     View songListHeader;
@@ -131,7 +118,17 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setDrawUnderStatusbar();
-        ButterKnife.bind(this);
+        songListView = findViewById(R.id.list);
+        artistImage = findViewById(R.id.image);
+        toolbar = findViewById(R.id.toolbar);
+        headerView = findViewById(R.id.header);
+        headerOverlay = findViewById(R.id.header_overlay);
+        durationIconImageView = findViewById(R.id.duration_icon);
+        songCountIconImageView = findViewById(R.id.song_count_icon);
+        albumCountIconImageView = findViewById(R.id.album_count_icon);
+        durationTextView = findViewById(R.id.duration_text);
+        songCountTextView = findViewById(R.id.song_count_text);
+        albumCountTextView = findViewById(R.id.album_count_text);
 
         lastFMRestClient = new LastFMRestClient(this);
         usePalette = PreferenceUtil.getInstance(this).albumArtistColoredFooters();

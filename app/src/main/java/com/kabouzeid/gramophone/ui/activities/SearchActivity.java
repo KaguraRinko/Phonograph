@@ -30,19 +30,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class SearchActivity extends AbsMusicServiceActivity implements SearchView.OnQueryTextListener, LoaderManager.LoaderCallbacks<List<Object>> {
 
     public static final String QUERY = "query";
     private static final int LOADER_ID = LoaderIds.SEARCH_ACTIVITY;
 
-    @BindView(R.id.recycler_view)
     RecyclerView recyclerView;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(android.R.id.empty)
     TextView empty;
 
     SearchView searchView;
@@ -55,7 +50,9 @@ public class SearchActivity extends AbsMusicServiceActivity implements SearchVie
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
         setDrawUnderStatusbar();
-        ButterKnife.bind(this);
+        recyclerView = findViewById(R.id.recycler_view);
+        toolbar = findViewById(R.id.toolbar);
+        empty = findViewById(android.R.id.empty);
 
         setStatusbarColorAuto();
         setNavigationbarColorAuto();

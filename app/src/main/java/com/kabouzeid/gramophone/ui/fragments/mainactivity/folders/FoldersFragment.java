@@ -62,9 +62,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
 
 public class FoldersFragment extends AbsMainActivityFragment implements MainActivity.MainActivityFragmentCallbacks, CabHolder, BreadCrumbLayout.SelectionCallback, SongFileAdapter.Callbacks, AppBarLayout.OnOffsetChangedListener, LoaderManager.LoaderCallbacks<List<File>> {
 
@@ -73,21 +70,13 @@ public class FoldersFragment extends AbsMainActivityFragment implements MainActi
     protected static final String PATH = "path";
     protected static final String CRUMBS = "crumbs";
 
-    private Unbinder unbinder;
 
-    @BindView(R.id.coordinator_layout)
     CoordinatorLayout coordinatorLayout;
-    @BindView(R.id.container)
     View container;
-    @BindView(android.R.id.empty)
     View empty;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(R.id.bread_crumbs)
     BreadCrumbLayout breadCrumbs;
-    @BindView(R.id.appbar)
     AppBarLayout appbar;
-    @BindView(R.id.recycler_view)
     FastScrollRecyclerView recyclerView;
 
     private SongFileAdapter adapter;
@@ -150,7 +139,13 @@ public class FoldersFragment extends AbsMainActivityFragment implements MainActi
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_folder, container, false);
-        unbinder = ButterKnife.bind(this, view);
+        coordinatorLayout = view.findViewById(R.id.coordinator_layout);
+        container = view.findViewById(R.id.container);
+        empty = view.findViewById(android.R.id.empty);
+        toolbar = view.findViewById(R.id.toolbar);
+        breadCrumbs = view.findViewById(R.id.bread_crumbs);
+        appbar = view.findViewById(R.id.appbar);
+        recyclerView = view.findViewById(R.id.recycler_view);
         return view;
     }
 
@@ -216,7 +211,6 @@ public class FoldersFragment extends AbsMainActivityFragment implements MainActi
     @Override
     public void onDestroyView() {
         appbar.removeOnOffsetChangedListener(this);
-        unbinder.unbind();
         super.onDestroyView();
     }
 
