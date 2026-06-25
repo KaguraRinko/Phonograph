@@ -5,11 +5,15 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.android.material.navigation.NavigationView;
@@ -21,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
@@ -29,13 +34,13 @@ import com.kabouzeid.appthemehelper.util.ATHUtil;
 import com.kabouzeid.appthemehelper.util.NavigationViewUtil;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.dialogs.ChangelogDialog;
-import com.kabouzeid.gramophone.dialogs.ScanMediaFolderChooserDialog;
 import com.kabouzeid.gramophone.glide.SongGlideRequest;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
 import com.kabouzeid.gramophone.helper.SearchQueryHelper;
 import com.kabouzeid.gramophone.loader.AlbumLoader;
 import com.kabouzeid.gramophone.loader.ArtistLoader;
 import com.kabouzeid.gramophone.loader.PlaylistSongLoader;
+import com.kabouzeid.gramophone.misc.UpdateToastMediaScannerCompletionListener;
 import com.kabouzeid.gramophone.model.Song;
 import com.kabouzeid.gramophone.service.MusicService;
 import com.kabouzeid.gramophone.ui.activities.base.AbsSlidingMusicPanelActivity;
@@ -44,9 +49,11 @@ import com.kabouzeid.gramophone.ui.fragments.mainactivity.folders.FoldersFragmen
 import com.kabouzeid.gramophone.ui.fragments.mainactivity.library.LibraryFragment;
 import com.kabouzeid.gramophone.util.MusicUtil;
 import com.kabouzeid.gramophone.util.PreferenceUtil;
+import com.kabouzeid.gramophone.util.StorageAccessUtil;
 
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,11 +76,14 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
     @Nullable
     private View navigationDrawerHeader;
 
+    private ActivityResultLauncher<Uri> scanMediaFolderLauncher;
+
     private boolean blockRequestPermissions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        scanMediaFolderLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), this::scanSelectedMediaFolder);
         setDrawUnderStatusbar();
         navigationView = findViewById(R.id.navigation_view);
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -165,8 +175,9 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
                     new Handler().postDelayed(() -> setMusicChooser(FOLDERS), 200);
             } else if (menuItem.getItemId() == R.id.action_scan) {
                     new Handler().postDelayed(() -> {
-                        ScanMediaFolderChooserDialog dialog = ScanMediaFolderChooserDialog.create();
-                        dialog.show(getSupportFragmentManager(), "SCAN_MEDIA_FOLDER_CHOOSER");
+                        if (scanMediaFolderLauncher != null) {
+                            scanMediaFolderLauncher.launch(null);
+                        }
                     }, 200);
             } else if (menuItem.getItemId() == R.id.nav_settings) {
                     new Handler().postDelayed(() -> startActivity(new Intent(MainActivity.this, SettingsActivity.class)), 200);
@@ -175,6 +186,35 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
             }
             return true;
         });
+    }
+
+    private void scanSelectedMediaFolder(@Nullable Uri uri) {
+        if (uri == null) {
+            return;
+        }
+
+        StorageAccessUtil.takePersistableReadPermission(this, uri);
+        File folder = StorageAccessUtil.getFileFromTreeUri(this, uri);
+        if (folder == null || !folder.exists() || !folder.isDirectory()) {
+            Toast.makeText(this, R.string.selected_folder_not_accessible, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new FoldersFragment.ArrayListPathsAsyncTask(this, this::scanPaths)
+                .execute(new FoldersFragment.ArrayListPathsAsyncTask.LoadingInfo(folder, FoldersFragment.AUDIO_FILE_FILTER));
+    }
+
+    private void scanPaths(@Nullable String[] toBeScanned) {
+        if (toBeScanned == null || toBeScanned.length < 1) {
+            Toast.makeText(this, R.string.nothing_to_scan, Toast.LENGTH_SHORT).show();
+        } else {
+            MediaScannerConnection.scanFile(
+                    getApplicationContext(),
+                    toBeScanned,
+                    null,
+                    new UpdateToastMediaScannerCompletionListener(this, toBeScanned)
+            );
+        }
     }
 
     private void setUpDrawerLayout() {

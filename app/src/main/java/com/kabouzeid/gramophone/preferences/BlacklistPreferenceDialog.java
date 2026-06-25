@@ -1,15 +1,21 @@
 package com.kabouzeid.gramophone.preferences;
 
 import android.app.Dialog;
+import android.net.Uri;
 import android.os.Bundle;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import android.text.Html;
+import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.kabouzeid.gramophone.R;
-import com.kabouzeid.gramophone.dialogs.BlacklistFolderChooserDialog;
 import com.kabouzeid.gramophone.provider.BlacklistStore;
+import com.kabouzeid.gramophone.util.StorageAccessUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -18,22 +24,24 @@ import java.util.List;
 /**
  * @author Karim Abou Zeid (kabouzeid)
  */
-public class BlacklistPreferenceDialog extends DialogFragment implements BlacklistFolderChooserDialog.FolderCallback {
+public class BlacklistPreferenceDialog extends DialogFragment {
 
     private List<String> paths;
+    private ActivityResultLauncher<Uri> addFolderLauncher;
 
     public static BlacklistPreferenceDialog newInstance() {
         return new BlacklistPreferenceDialog();
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        addFolderLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), this::addFolderToBlacklist);
+    }
+
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        BlacklistFolderChooserDialog blacklistFolderChooserDialog = (BlacklistFolderChooserDialog) getChildFragmentManager().findFragmentByTag("FOLDER_CHOOSER");
-        if (blacklistFolderChooserDialog != null) {
-            blacklistFolderChooserDialog.setCallback(this);
-        }
-
         refreshBlacklistData();
         return new MaterialDialog.Builder(getContext())
                 .title(R.string.blacklist)
@@ -63,9 +71,9 @@ public class BlacklistPreferenceDialog extends DialogFragment implements Blackli
                         }).show())
                 // add
                 .onNegative((materialDialog, dialogAction) -> {
-                    BlacklistFolderChooserDialog dialog = BlacklistFolderChooserDialog.create();
-                    dialog.setCallback(BlacklistPreferenceDialog.this);
-                    dialog.show(getChildFragmentManager(), "FOLDER_CHOOSER");
+                    if (addFolderLauncher != null) {
+                        addFolderLauncher.launch(null);
+                    }
                 })
                 .onPositive((materialDialog, dialogAction) -> dismiss())
                 .build();
@@ -82,9 +90,19 @@ public class BlacklistPreferenceDialog extends DialogFragment implements Blackli
         }
     }
 
-    @Override
-    public void onFolderSelection(@NonNull BlacklistFolderChooserDialog folderChooserDialog, @NonNull File file) {
-        BlacklistStore.getInstance(getContext()).addPath(file);
+    private void addFolderToBlacklist(@Nullable Uri uri) {
+        if (uri == null || getContext() == null) {
+            return;
+        }
+
+        StorageAccessUtil.takePersistableReadPermission(getContext(), uri);
+        File folder = StorageAccessUtil.getFileFromTreeUri(getContext(), uri);
+        if (folder == null || !folder.exists() || !folder.isDirectory()) {
+            Toast.makeText(getContext(), R.string.selected_folder_not_accessible, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        BlacklistStore.getInstance(getContext()).addPath(folder);
         refreshBlacklistData();
     }
 }
