@@ -265,9 +265,9 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
             if (source.isLocal()) {
                 continue;
             }
-            menu.add(R.id.navigation_drawer_menu_category_sections,
+            menu.add(R.id.navigation_drawer_menu_category_sources,
                     DYNAMIC_SOURCE_ITEM_ID + sourceIndex,
-                    2 + sourceIndex,
+                    sourceIndex,
                     source.name)
                     .setIcon(R.drawable.ic_library_music_white_24dp)
                     .setCheckable(true)
@@ -277,16 +277,25 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
 
         int lastMusicChooser = PreferenceUtil.getInstance(this).getLastMusicChooser();
         if (lastMusicChooser == FOLDERS) {
+            clearDynamicSourceChecks(menu);
             navigationView.setCheckedItem(R.id.nav_folders);
             return;
         }
 
         String currentSourceId = MediaSourceManager.getCurrentSourceId(this);
         if (MediaSourceManager.isLocalSource(currentSourceId)) {
+            clearDynamicSourceChecks(menu);
             navigationView.setCheckedItem(R.id.nav_library);
             return;
         }
 
+        if (localLibrary != null) {
+            localLibrary.setChecked(false);
+        }
+        MenuItem folders = menu.findItem(R.id.nav_folders);
+        if (folders != null) {
+            folders.setChecked(false);
+        }
         for (int i = 0; i < menu.size(); i++) {
             MenuItem item = menu.getItem(i);
             if (currentSourceId.equals(getMenuSourceId(item))) {
@@ -296,7 +305,21 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
         }
 
         MediaSourceManager.setCurrentSourceId(this, MediaSourceManager.LOCAL_SOURCE_ID);
+        clearDynamicSourceChecks(menu);
+        if (folders != null) {
+            folders.setChecked(false);
+        }
         navigationView.setCheckedItem(R.id.nav_library);
+    }
+
+    private void clearDynamicSourceChecks(@NonNull Menu menu) {
+        for (int i = 0; i < menu.size(); i++) {
+            MenuItem item = menu.getItem(i);
+            int itemId = item.getItemId();
+            if (itemId >= DYNAMIC_SOURCE_ITEM_ID && itemId < DYNAMIC_SOURCE_ITEM_ID_LIMIT) {
+                item.setChecked(false);
+            }
+        }
     }
 
     private void scanSelectedMediaFolder(@Nullable Uri uri) {

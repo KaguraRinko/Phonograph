@@ -257,6 +257,7 @@
     <string name="subsonic_servers">Subsonic servers</string>
     <string name="pref_summary_subsonic_servers">Manage Subsonic, OpenSubsonic, and Navidrome servers.</string>
     <string name="add_subsonic_server">Add server</string>
+    <string name="manage_subsonic_servers">Manage servers</string>
     <string name="edit_subsonic_server">Edit server</string>
     <string name="no_subsonic_servers">No servers</string>
     <string name="server_name">Server name</string>
