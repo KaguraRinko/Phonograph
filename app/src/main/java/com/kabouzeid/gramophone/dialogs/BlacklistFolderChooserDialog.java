@@ -74,7 +74,7 @@ public class BlacklistFolderChooserDialog extends DialogFragment implements Mate
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
                 && ActivityCompat.checkSelfPermission(
-                getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                getActivity(), getStoragePermission())
                 != PackageManager.PERMISSION_GRANTED) {
             return new MaterialDialog.Builder(getActivity())
                     .title(R.string.md_error_label)
@@ -105,6 +105,13 @@ public class BlacklistFolderChooserDialog extends DialogFragment implements Mate
                         .positiveText(R.string.add_action)
                         .negativeText(android.R.string.cancel);
         return builder.build();
+    }
+
+    private static String getStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return Manifest.permission.READ_MEDIA_AUDIO;
+        }
+        return Manifest.permission.READ_EXTERNAL_STORAGE;
     }
 
     @Override

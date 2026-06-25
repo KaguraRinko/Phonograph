@@ -116,7 +116,7 @@ public abstract class AbsBaseActivity extends AbsThemeActivity {
         if (requestCode == PERMISSION_REQUEST) {
             for (int grantResult : grantResults) {
                 if (grantResult != PackageManager.PERMISSION_GRANTED) {
-                    if (ActivityCompat.shouldShowRequestPermissionRationale(AbsBaseActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(AbsBaseActivity.this, permissions[0])) {
                         //User has deny from permission dialog
                         Snackbar.make(getSnackBarContainer(), getPermissionDeniedMessage(),
                                 Snackbar.LENGTH_INDEFINITE)

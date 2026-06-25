@@ -1,5 +1,6 @@
 package com.kabouzeid.gramophone.ui.activities;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -56,6 +57,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
 
     public static final String TAG = MainActivity.class.getSimpleName();
     public static final int APP_INTRO_REQUEST = 100;
+    private static final int NOTIFICATION_PERMISSION_REQUEST = 101;
 
     private static final int LIBRARY = 0;
     private static final int FOLDERS = 1;
@@ -95,6 +97,14 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
             showChangelog();
         }
 
+        requestNotificationPermissionIfNeeded();
+    }
+
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST);
+        }
     }
 
     private void setMusicChooser(int key) {
