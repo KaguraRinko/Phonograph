@@ -90,7 +90,7 @@ public class SettingsActivity extends AbsBaseActivity implements ColorChooserDia
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            getOnBackPressedDispatcher().onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);

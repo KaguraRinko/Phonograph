@@ -5,6 +5,7 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.Bundle;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.ColorInt;
 import androidx.annotation.FloatRange;
 import androidx.annotation.LayoutRes;
@@ -93,6 +94,16 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
             }
         });
         slidingUpPanelLayout.addPanelSlideListener(this);
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (!handleBackPress()) {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
     }
 
     @Override
@@ -210,12 +221,6 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
         ViewGroup contentContainer = slidingMusicPanelLayout.findViewById(R.id.content_container);
         getLayoutInflater().inflate(resId, contentContainer);
         return slidingMusicPanelLayout;
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (!handleBackPress())
-            super.onBackPressed();
     }
 
     public boolean handleBackPress() {

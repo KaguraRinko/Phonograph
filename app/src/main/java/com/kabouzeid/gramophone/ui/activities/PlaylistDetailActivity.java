@@ -148,7 +148,7 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
                 MusicPlayerRemote.openAndShuffleQueue(adapter.getDataSet(), true);
                 return true;
                     } else if (id == android.R.id.home) {
-                onBackPressed();
+                getOnBackPressedDispatcher().onBackPressed();
                 return true;
                 }
         return PlaylistMenuHelper.handleMenuClick(this, playlist, item);
@@ -167,12 +167,13 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
     }
 
     @Override
-    public void onBackPressed() {
-        if (cab != null && cab.isActive()) cab.finish();
-        else {
-            recyclerView.stopScroll();
-            super.onBackPressed();
+    public boolean handleBackPress() {
+        if (cab != null && cab.isActive()) {
+            cab.finish();
+            return true;
         }
+        recyclerView.stopScroll();
+        return super.handleBackPress();
     }
 
     @Override

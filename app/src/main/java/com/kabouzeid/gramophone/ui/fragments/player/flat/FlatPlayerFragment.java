@@ -225,7 +225,7 @@ public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
     private void setUpPlayerToolbar() {
         toolbar.inflateMenu(R.menu.menu_player);
         toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp);
-        toolbar.setNavigationOnClickListener(v -> getActivity().onBackPressed());
+        toolbar.setNavigationOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
         toolbar.setOnMenuItemClickListener(this);
     }
 

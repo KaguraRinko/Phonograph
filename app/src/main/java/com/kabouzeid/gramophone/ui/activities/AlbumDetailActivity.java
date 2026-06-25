@@ -312,7 +312,7 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
                 DeleteSongsDialog.create(songs).show(getSupportFragmentManager(), "DELETE_SONGS");
                 return true;
                     } else if (id == android.R.id.home) {
-                super.onBackPressed();
+                getOnBackPressedDispatcher().onBackPressed();
                 return true;
                     } else if (id == R.id.action_tag_editor) {
                 Intent intent = new Intent(this, AlbumTagEditorActivity.class);
@@ -382,12 +382,13 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
     }
 
     @Override
-    public void onBackPressed() {
-        if (cab != null && cab.isActive()) cab.finish();
-        else {
-            recyclerView.stopScroll();
-            super.onBackPressed();
+    public boolean handleBackPress() {
+        if (cab != null && cab.isActive()) {
+            cab.finish();
+            return true;
         }
+        recyclerView.stopScroll();
+        return super.handleBackPress();
     }
 
     @Override
