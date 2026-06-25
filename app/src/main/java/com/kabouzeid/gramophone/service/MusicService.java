@@ -1029,14 +1029,35 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     }
 
     public int getSongDurationMillis() {
-        return playback.duration();
+        int duration = playback.duration();
+        if (duration > 0) {
+            return duration;
+        }
+        if (currentTrackTranscoded) {
+            long songDuration = getCurrentSong().duration;
+            if (songDuration > 0) {
+                return safeDurationToInt(songDuration);
+            }
+        }
+        return duration;
     }
 
     public int getBufferedPositionMillis() {
+        int duration = getSongDurationMillis();
+        if (duration <= 0) {
+            return playback.bufferedPosition();
+        }
         if (bufferedProgressPercent >= 100) {
-            return getSongDurationMillis();
+            return duration;
+        }
+        if (currentTrackTranscoded) {
+            return Math.round(duration * (bufferedProgressPercent / 100f));
         }
         return playback.bufferedPosition();
+    }
+
+    private int safeDurationToInt(long duration) {
+        return duration > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) duration;
     }
 
     public int getBufferedProgressPercent() {
