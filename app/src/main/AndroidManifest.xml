@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.kabouzeid.gramophone">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -23,7 +22,9 @@
         android:theme="@style/Theme.Phonograph.Light"
         android:requestLegacyExternalStorage="true"
         tools:ignore="UnusedAttribute">
-        <activity android:name=".ui.activities.MainActivity">
+        <activity
+            android:name=".ui.activities.MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.MUSIC_PLAYER" />
@@ -120,13 +121,18 @@
             android:label="@string/report_an_issue" />
         <activity
             android:name=".appshortcuts.AppShortcutLauncherActivity"
+            android:exported="true"
             android:launchMode="singleInstance"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <service
             android:name=".service.MusicService"
-            android:enabled="true" />
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
-        <receiver android:name=".service.MediaButtonIntentReceiver">
+        <receiver
+            android:name=".service.MediaButtonIntentReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
@@ -146,7 +152,9 @@
             android:value="GlideModule" />
 
         <!-- Widgets -->
-        <receiver android:name=".appwidgets.BootReceiver">
+        <receiver
+            android:name=".appwidgets.BootReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
