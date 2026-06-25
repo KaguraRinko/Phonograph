@@ -163,13 +163,13 @@ public class CardPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
     protected void updatePlayPauseDrawableState(boolean animate) {
         if (MusicPlayerRemote.isBuffering()) {
             if (!showingBufferingIcon) {
-                playPauseFab.setImageDrawable(null);
+                playPauseFab.setVisibility(View.INVISIBLE);
                 bufferingProgress.setVisibility(View.VISIBLE);
                 showingBufferingIcon = true;
             }
         } else if (showingBufferingIcon) {
             bufferingProgress.setVisibility(View.GONE);
-            playPauseFab.setImageDrawable(playerFabPlayPauseDrawable);
+            playPauseFab.setVisibility(View.VISIBLE);
             showingBufferingIcon = false;
         }
         if (MusicPlayerRemote.isPlaying()) {
