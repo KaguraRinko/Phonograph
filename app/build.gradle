@@ -1,6 +1,6 @@
-import javax.annotation.Nullable
-
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+}
 
 static def gitBranch() {
     def branch = 'GitHub'
@@ -29,18 +29,18 @@ def getProperties(String fileName) {
     return properties
 }
 
-static def getProperty(@Nullable Properties properties, String name) {
+static def getProperty(Properties properties, String name) {
     return properties.getProperty(name) ?: "$name missing"
 }
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion '29.0.3'
-    defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 29
+    namespace 'com.kabouzeid.gramophone'
+    compileSdk 36
 
-        renderscriptTargetApi 29
+    defaultConfig {
+        minSdk 23
+        targetSdk 36
+
         vectorDrawables.useSupportLibrary = true
 
         applicationId 'com.kabouzeid.gramophone'
@@ -60,7 +60,7 @@ android {
         release {
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
         debug {
@@ -69,17 +69,17 @@ android {
         }
     }
     packagingOptions {
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/NOTICE'
+        resources {
+            excludes += ['META-INF/LICENSE', 'META-INF/NOTICE']
+        }
     }
-    lintOptions {
-        disable 'MissingTranslation'
-        disable 'InvalidPackage'
+    lint {
+        disable += ['MissingTranslation', 'InvalidPackage']
         abortOnError false
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
