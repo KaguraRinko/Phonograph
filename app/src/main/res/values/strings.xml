@@ -256,6 +256,10 @@
     <string name="subsonic">Subsonic</string>
     <string name="subsonic_servers">Subsonic servers</string>
     <string name="pref_summary_subsonic_servers">Manage Subsonic, OpenSubsonic, and Navidrome servers.</string>
+    <string name="pref_title_subsonic_transcoding_enabled">Transcode unsupported songs</string>
+    <string name="pref_summary_subsonic_transcoding_enabled">Retry server playback with transcoding when the original file cannot be played.</string>
+    <string name="pref_title_subsonic_transcoding_format">Transcoding format</string>
+    <string name="pref_title_subsonic_transcoding_bitrate">Transcoding bitrate</string>
     <string name="add_subsonic_server">Add server</string>
     <string name="manage_subsonic_servers">Manage servers</string>
     <string name="edit_subsonic_server">Edit server</string>

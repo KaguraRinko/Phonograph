@@ -10,6 +10,33 @@
             android:summary="@string/pref_summary_subsonic_servers"
             android:title="@string/subsonic_servers" />
 
+        <com.kabouzeid.appthemehelper.common.prefs.supportv7.ATESwitchPreference
+            app:iconSpaceReserved="false"
+            android:defaultValue="true"
+            android:key="subsonic_transcoding_enabled"
+            android:summary="@string/pref_summary_subsonic_transcoding_enabled"
+            android:title="@string/pref_title_subsonic_transcoding_enabled" />
+
+        <com.kabouzeid.appthemehelper.common.prefs.supportv7.ATEListPreference
+            app:iconSpaceReserved="false"
+            android:defaultValue="mp3"
+            android:entries="@array/pref_subsonic_transcoding_format_titles"
+            android:entryValues="@array/pref_subsonic_transcoding_format_values"
+            android:key="subsonic_transcoding_format"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="@string/pref_title_subsonic_transcoding_format" />
+
+        <com.kabouzeid.appthemehelper.common.prefs.supportv7.ATEListPreference
+            app:iconSpaceReserved="false"
+            android:defaultValue="192"
+            android:entries="@array/pref_subsonic_transcoding_bitrate_titles"
+            android:entryValues="@array/pref_subsonic_transcoding_bitrate_values"
+            android:key="subsonic_transcoding_bitrate"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="@string/pref_title_subsonic_transcoding_bitrate" />
+
     </com.kabouzeid.appthemehelper.common.prefs.supportv7.ATEPreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

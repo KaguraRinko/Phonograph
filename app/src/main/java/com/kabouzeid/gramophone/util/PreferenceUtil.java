@@ -87,6 +87,10 @@ public final class PreferenceUtil {
 
     public static final String LIBRARY_CATEGORIES = "library_categories";
 
+    public static final String SUBSONIC_TRANSCODING_ENABLED = "subsonic_transcoding_enabled";
+    public static final String SUBSONIC_TRANSCODING_FORMAT = "subsonic_transcoding_format";
+    public static final String SUBSONIC_TRANSCODING_BITRATE = "subsonic_transcoding_bitrate";
+
     private static final String REMEMBER_SHUFFLE = "remember_shuffle";
 
     private static PreferenceUtil sInstance;
@@ -473,6 +477,24 @@ public final class PreferenceUtil {
 
     public final String autoDownloadImagesPolicy() {
         return mPreferences.getString(AUTO_DOWNLOAD_IMAGES_POLICY, "only_wifi");
+    }
+
+    public final boolean subsonicTranscodingEnabled() {
+        return mPreferences.getBoolean(SUBSONIC_TRANSCODING_ENABLED, true);
+    }
+
+    @NonNull
+    public final String getSubsonicTranscodingFormat() {
+        return mPreferences.getString(SUBSONIC_TRANSCODING_FORMAT, "mp3");
+    }
+
+    public final int getSubsonicTranscodingBitrate() {
+        String value = mPreferences.getString(SUBSONIC_TRANSCODING_BITRATE, "192");
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return 192;
+        }
     }
 
     public final File getStartDirectory() {

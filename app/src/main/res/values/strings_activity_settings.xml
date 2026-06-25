@@ -42,4 +42,36 @@
         <item>this_year</item>
     </string-array>
 
+    <string-array name="pref_subsonic_transcoding_format_titles">
+        <item>MP3</item>
+        <item>Opus</item>
+        <item>Ogg Vorbis</item>
+        <item>AAC</item>
+    </string-array>
+
+    <string-array name="pref_subsonic_transcoding_format_values">
+        <item>mp3</item>
+        <item>opus</item>
+        <item>ogg</item>
+        <item>aac</item>
+    </string-array>
+
+    <string-array name="pref_subsonic_transcoding_bitrate_titles">
+        <item>64 kbps</item>
+        <item>96 kbps</item>
+        <item>128 kbps</item>
+        <item>192 kbps</item>
+        <item>256 kbps</item>
+        <item>320 kbps</item>
+    </string-array>
+
+    <string-array name="pref_subsonic_transcoding_bitrate_values">
+        <item>64</item>
+        <item>96</item>
+        <item>128</item>
+        <item>192</item>
+        <item>256</item>
+        <item>320</item>
+    </string-array>
+
 </resources>

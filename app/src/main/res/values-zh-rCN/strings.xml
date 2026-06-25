@@ -296,6 +296,10 @@
     <string name="sync_progress_saving">正在保存资料库…</string>
     <string name="subsonic_syncing_title">正在同步</string>
     <string name="subsonic_syncing_progress_x">%1$d%% · %2$s</string>
+    <string name="pref_title_subsonic_transcoding_enabled">转码无法播放的歌曲</string>
+    <string name="pref_summary_subsonic_transcoding_enabled">原文件无法播放时，使用服务器转码重试。</string>
+    <string name="pref_title_subsonic_transcoding_format">转码格式</string>
+    <string name="pref_title_subsonic_transcoding_bitrate">转码码率</string>
     <string name="finish_current_music_sleep_timer">播完最后一首</string>
     <string name="dialog_ringtone_title">设置为铃声</string>
     <string name="dialog_ringtone_message">允许 Phonograph 调整音频设定</string>

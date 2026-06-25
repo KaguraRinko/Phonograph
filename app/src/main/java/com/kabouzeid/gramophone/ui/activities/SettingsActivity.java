@@ -306,8 +306,31 @@ public class SettingsActivity extends AbsBaseActivity implements ColorChooserDia
                 startActivity(new Intent(getActivity(), SubsonicServersActivity.class));
                 return true;
             });
+            final TwoStatePreference subsonicTranscodingEnabled = (TwoStatePreference) findPreference(PreferenceUtil.SUBSONIC_TRANSCODING_ENABLED);
+            final Preference subsonicTranscodingFormat = findPreference(PreferenceUtil.SUBSONIC_TRANSCODING_FORMAT);
+            final Preference subsonicTranscodingBitrate = findPreference(PreferenceUtil.SUBSONIC_TRANSCODING_BITRATE);
+            setSummary(subsonicTranscodingFormat);
+            setSummary(subsonicTranscodingBitrate);
+            setSubsonicTranscodingOptionsEnabled(subsonicTranscodingEnabled.isChecked());
+            subsonicTranscodingEnabled.setOnPreferenceChangeListener((preference, newValue) -> {
+                setSubsonicTranscodingOptionsEnabled((Boolean) newValue);
+                return true;
+            });
+            subsonicTranscodingFormat.setOnPreferenceChangeListener((preference, newValue) -> {
+                setSummary(subsonicTranscodingFormat, newValue);
+                return true;
+            });
+            subsonicTranscodingBitrate.setOnPreferenceChangeListener((preference, newValue) -> {
+                setSummary(subsonicTranscodingBitrate, newValue);
+                return true;
+            });
 
             updateNowPlayingScreenSummary();
+        }
+
+        private void setSubsonicTranscodingOptionsEnabled(boolean enabled) {
+            findPreference(PreferenceUtil.SUBSONIC_TRANSCODING_FORMAT).setEnabled(enabled);
+            findPreference(PreferenceUtil.SUBSONIC_TRANSCODING_BITRATE).setEnabled(enabled);
         }
 
         private boolean hasEqualizer() {
