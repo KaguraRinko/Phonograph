@@ -109,6 +109,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
 
     private void requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && hasPermissions()
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST);
         }
@@ -151,6 +152,14 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
     @Override
     protected void requestPermissions() {
         if (!blockRequestPermissions) super.requestPermissions();
+    }
+
+    @Override
+    protected void onHasPermissionsChanged(boolean hasPermissions) {
+        super.onHasPermissionsChanged(hasPermissions);
+        if (hasPermissions) {
+            requestNotificationPermissionIfNeeded();
+        }
     }
 
     @Override
