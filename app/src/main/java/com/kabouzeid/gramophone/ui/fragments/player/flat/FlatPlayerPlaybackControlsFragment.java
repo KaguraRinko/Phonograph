@@ -167,13 +167,15 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
     protected void updatePlayPauseDrawableState(boolean animate) {
         if (MusicPlayerRemote.isBuffering()) {
             if (!showingBufferingIcon) {
-                playPauseButton.setVisibility(View.INVISIBLE);
+                playPauseButton.setImageDrawable(null);
+                playPauseButton.setVisibility(View.VISIBLE);
                 bufferingProgress.setVisibility(View.VISIBLE);
                 showingBufferingIcon = true;
             }
         } else if (showingBufferingIcon) {
             bufferingProgress.setVisibility(View.GONE);
             playPauseButton.setVisibility(View.VISIBLE);
+            playPauseButton.setImageDrawable(playPauseDrawable);
             updatePlayPauseColor();
             showingBufferingIcon = false;
         }
