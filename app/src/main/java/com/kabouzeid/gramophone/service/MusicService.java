@@ -122,7 +122,8 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     private static final int DUCK = 7;
     private static final int UNDUCK = 8;
     public static final int RESTORE_QUEUES = 9;
-    private static final int RETRY_CURRENT_WITH_TRANSCODING = 10;
+    private static final int RETRY_CURRENT_WITH_FFMPEG = 10;
+    private static final int RETRY_CURRENT_WITH_TRANSCODING = 11;
 
     public static final int SHUFFLE_MODE_NONE = 0;
     public static final int SHUFFLE_MODE_SHUFFLE = 1;
@@ -143,6 +144,9 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     private AppWidgetCard appWidgetCard = AppWidgetCard.getInstance();
 
     private Playback playback;
+    private Playback nativePlayback;
+    private Playback ffmpegPlayback;
+    private PlaybackAttempt playbackAttempt = PlaybackAttempt.FAILED;
     private List<Song> playingQueue = new ArrayList<>();
     private List<Song> originalPlayingQueue = new ArrayList<>();
     private int position = -1;
@@ -181,10 +185,16 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     private ContentObserver mediaStoreObserver;
     private boolean notHandledMetaChangedForCurrentTrack;
     private boolean buffering;
-    private boolean currentTrackTranscoded;
     private int bufferedProgressPercent = 100;
 
     private Handler uiThreadHandler;
+
+    private enum PlaybackAttempt {
+        NATIVE_RAW,
+        FFMPEG_RAW,
+        NATIVE_SUBSONIC_TRANSCODE,
+        FAILED
+    }
 
     private String getTrackUri(@NonNull Song song) {
         if (SubsonicUri.isSubsonicUri(song.data)) {
@@ -210,8 +220,11 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         musicPlayerHandlerThread.start();
         playerHandler = new PlaybackHandler(this, musicPlayerHandlerThread.getLooper());
 
-        playback = new MultiPlayer(this);
-        playback.setCallbacks(this);
+        nativePlayback = new MultiPlayer(this);
+        nativePlayback.setCallbacks(this);
+        ffmpegPlayback = new FfmpegPlayback(this);
+        ffmpegPlayback.setCallbacks(this);
+        playback = nativePlayback;
 
         setupMediaSession();
 
@@ -517,9 +530,22 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         } else {
             queueSaveHandlerThread.quit();
         }
-        playback.release();
+        nativePlayback.release();
+        ffmpegPlayback.release();
         playback = null;
+        nativePlayback = null;
+        ffmpegPlayback = null;
         mediaSession.release();
+    }
+
+    private void setActivePlayback(@NonNull Playback activePlayback) {
+        if (playback == activePlayback) {
+            return;
+        }
+        if (playback != null) {
+            playback.stop();
+        }
+        playback = activePlayback;
     }
 
     public boolean isPlaying() {
@@ -553,7 +579,8 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         synchronized (this) {
             Song song = getCurrentSong();
             boolean remoteSong = isRemoteSong(song);
-            currentTrackTranscoded = false;
+            setActivePlayback(nativePlayback);
+            playbackAttempt = PlaybackAttempt.NATIVE_RAW;
             updateBufferedProgressPercent(remoteSong ? 0 : 100);
             setBuffering(remoteSong);
             boolean prepared = false;
@@ -561,8 +588,14 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
                 prepared = playback.setDataSource(getTrackUri(song));
             } catch (Exception ignored) {
             }
+            if (!prepared && shouldRetryWithFfmpeg(song)) {
+                prepared = openFfmpegTrack(song);
+            }
             if (!prepared && shouldRetryWithSubsonicTranscoding(song)) {
                 prepared = openTranscodedTrack(song);
+            }
+            if (!prepared) {
+                playbackAttempt = PlaybackAttempt.FAILED;
             }
             setBuffering(false);
             return prepared;
@@ -574,9 +607,26 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     }
 
     private boolean shouldRetryWithSubsonicTranscoding(@NonNull Song song) {
-        return !currentTrackTranscoded
+        return playbackAttempt != PlaybackAttempt.NATIVE_SUBSONIC_TRANSCODE
                 && isRemoteSong(song)
                 && PreferenceUtil.getInstance(this).subsonicTranscodingEnabled();
+    }
+
+    private boolean shouldRetryWithFfmpeg(@NonNull Song song) {
+        return playbackAttempt == PlaybackAttempt.NATIVE_RAW && !isRemoteSong(song);
+    }
+
+    private boolean openFfmpegTrack(@NonNull Song song) {
+        setActivePlayback(ffmpegPlayback);
+        playbackAttempt = PlaybackAttempt.FFMPEG_RAW;
+        updateBufferedProgressPercent(isRemoteSong(song) ? 0 : 100);
+        setBuffering(isRemoteSong(song));
+        try {
+            return playback.setDataSource(getTrackUri(song));
+        } catch (Exception ignored) {
+            playbackAttempt = PlaybackAttempt.FAILED;
+            return false;
+        }
     }
 
     private boolean openTranscodedTrack(@NonNull Song song) {
@@ -584,15 +634,40 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         if (transcodedTrackUri == null) {
             return false;
         }
+        setActivePlayback(nativePlayback);
+        playbackAttempt = PlaybackAttempt.NATIVE_SUBSONIC_TRANSCODE;
         updateBufferedProgressPercent(0);
         setBuffering(true);
         try {
             boolean prepared = playback.setDataSource(transcodedTrackUri);
-            currentTrackTranscoded = prepared;
+            if (!prepared) {
+                playbackAttempt = PlaybackAttempt.FAILED;
+            }
             return prepared;
         } catch (Exception ignored) {
-            currentTrackTranscoded = false;
+            playbackAttempt = PlaybackAttempt.FAILED;
             return false;
+        }
+    }
+
+    private void retryCurrentWithFfmpeg() {
+        boolean prepared;
+        synchronized (this) {
+            Song song = getCurrentSong();
+            if (!shouldRetryWithFfmpeg(song)) {
+                Toast.makeText(this, getResources().getString(R.string.unplayable_file), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            prepared = openFfmpegTrack(song);
+            setBuffering(false);
+            if (prepared) {
+                prepareNextImpl();
+            }
+        }
+        if (prepared) {
+            play();
+        } else {
+            Toast.makeText(this, getResources().getString(R.string.unplayable_file), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -1064,7 +1139,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         if (duration > 0) {
             return duration;
         }
-        if (currentTrackTranscoded) {
+        if (playbackAttempt == PlaybackAttempt.NATIVE_SUBSONIC_TRANSCODE) {
             long songDuration = getCurrentSong().duration;
             if (songDuration > 0) {
                 return safeDurationToInt(songDuration);
@@ -1081,7 +1156,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         if (bufferedProgressPercent >= 100) {
             return duration;
         }
-        if (currentTrackTranscoded) {
+        if (playbackAttempt == PlaybackAttempt.NATIVE_SUBSONIC_TRANSCODE) {
             return Math.round(duration * (bufferedProgressPercent / 100f));
         }
         return playback.bufferedPosition();
@@ -1326,12 +1401,19 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
 
     @Override
     public boolean onPlaybackError() {
-        if (!shouldRetryWithSubsonicTranscoding(getCurrentSong())) {
-            return false;
+        Song song = getCurrentSong();
+        if (shouldRetryWithFfmpeg(song)) {
+            playerHandler.removeMessages(RETRY_CURRENT_WITH_FFMPEG);
+            playerHandler.sendEmptyMessage(RETRY_CURRENT_WITH_FFMPEG);
+            return true;
         }
-        playerHandler.removeMessages(RETRY_CURRENT_WITH_TRANSCODING);
-        playerHandler.sendEmptyMessage(RETRY_CURRENT_WITH_TRANSCODING);
-        return true;
+        if (shouldRetryWithSubsonicTranscoding(song)) {
+            playerHandler.removeMessages(RETRY_CURRENT_WITH_TRANSCODING);
+            playerHandler.sendEmptyMessage(RETRY_CURRENT_WITH_TRANSCODING);
+            return true;
+        }
+        playbackAttempt = PlaybackAttempt.FAILED;
+        return false;
     }
 
     @Override
@@ -1447,6 +1529,10 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
 
                 case RESTORE_QUEUES:
                     service.restoreQueuesAndPositionIfNecessary();
+                    break;
+
+                case RETRY_CURRENT_WITH_FFMPEG:
+                    service.retryCurrentWithFfmpeg();
                     break;
 
                 case RETRY_CURRENT_WITH_TRANSCODING:
