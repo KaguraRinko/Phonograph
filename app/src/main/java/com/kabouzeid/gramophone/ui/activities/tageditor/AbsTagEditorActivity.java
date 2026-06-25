@@ -12,6 +12,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
@@ -62,7 +64,6 @@ public abstract class AbsTagEditorActivity extends AbsBaseActivity {
     public static final String EXTRA_ID = "extra_id";
     public static final String EXTRA_PALETTE = "extra_palette";
     private static final String TAG = AbsTagEditorActivity.class.getSimpleName();
-    private static final int REQUEST_CODE_SELECT_IMAGE = 1000;
     FloatingActionButton fab;
     ObservableScrollView observableScrollView;
     Toolbar toolbar;
@@ -72,6 +73,7 @@ public abstract class AbsTagEditorActivity extends AbsBaseActivity {
     private int headerVariableSpace;
     private int paletteColorPrimary;
     private boolean isInNoImageMode;
+    private ActivityResultLauncher<Intent> imagePickerLauncher;
     private final SimpleObservableScrollViewCallbacks observableScrollViewCallbacks = new SimpleObservableScrollViewCallbacks() {
         @Override
         public void onScrollChanged(int scrollY, boolean b, boolean b2) {
@@ -91,6 +93,19 @@ public abstract class AbsTagEditorActivity extends AbsBaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                Uri selectedImage = result.getData().getData();
+                if (selectedImage != null) {
+                    final int takeFlags = result.getData().getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION;
+                    try {
+                        getContentResolver().takePersistableUriPermission(selectedImage, takeFlags);
+                    } catch (SecurityException ignored) {
+                    }
+                    loadImageFromFile(selectedImage);
+                }
+            }
+        });
         setContentView(getContentViewLayout());
         fab = findViewById(R.id.play_pause_fab);
         observableScrollView = findViewById(R.id.observableScrollView);
@@ -156,9 +171,11 @@ public abstract class AbsTagEditorActivity extends AbsBaseActivity {
     }
 
     private void startImagePicker() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
-        startActivityForResult(Intent.createChooser(intent, getString(R.string.pick_from_local_storage)), REQUEST_CODE_SELECT_IMAGE);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        imagePickerLauncher.launch(intent);
     }
 
     protected abstract void loadCurrentImage();
@@ -401,19 +418,6 @@ public abstract class AbsTagEditorActivity extends AbsBaseActivity {
 
     protected long getId() {
         return id;
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @NonNull Intent imageReturnedIntent) {
-        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
-        switch (requestCode) {
-            case REQUEST_CODE_SELECT_IMAGE:
-                if (resultCode == RESULT_OK) {
-                    Uri selectedImage = imageReturnedIntent.getData();
-                    loadImageFromFile(selectedImage);
-                }
-                break;
-        }
     }
 
     protected abstract void loadImageFromFile(Uri selectedFile);
