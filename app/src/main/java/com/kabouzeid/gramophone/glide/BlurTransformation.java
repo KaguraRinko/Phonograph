@@ -19,11 +19,16 @@ import com.kabouzeid.gramophone.BuildConfig;
 import com.kabouzeid.gramophone.helper.StackBlur;
 import com.kabouzeid.gramophone.util.ImageUtil;
 
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+
 /**
  * @author Karim Abou Zeid (kabouzeid)
  */
 public class BlurTransformation extends BitmapTransformation {
     public static final float DEFAULT_BLUR_RADIUS = 5f;
+    private static final String ID = "com.kabouzeid.gramophone.glide.BlurTransformation";
+    private static final Charset CHARSET = Charset.forName("UTF-8");
 
     private Context context;
     private float blurRadius;
@@ -36,12 +41,10 @@ public class BlurTransformation extends BitmapTransformation {
     }
 
     private BlurTransformation(Builder builder) {
-        super(builder.context);
         init(builder);
     }
 
     private BlurTransformation(Builder builder, BitmapPool bitmapPool) {
-        super(bitmapPool);
         init(builder);
     }
 
@@ -91,7 +94,7 @@ public class BlurTransformation extends BitmapTransformation {
     }
 
     @Override
-    protected Bitmap transform(BitmapPool pool, Bitmap toTransform, int outWidth, int outHeight) {
+    protected Bitmap transform(@NonNull BitmapPool pool, @NonNull Bitmap toTransform, int outWidth, int outHeight) {
         int sampling;
         if (this.sampling == 0) {
             sampling = ImageUtil.calculateInSampleSize(toTransform.getWidth(), toTransform.getHeight(), 100);
@@ -142,7 +145,24 @@ public class BlurTransformation extends BitmapTransformation {
     }
 
     @Override
-    public String getId() {
-        return "BlurTransformation(radius=" + blurRadius + ", sampling=" + sampling + ")";
+    public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
+        messageDigest.update((ID + blurRadius + sampling).getBytes(CHARSET));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof BlurTransformation) {
+            BlurTransformation other = (BlurTransformation) obj;
+            return blurRadius == other.blurRadius && sampling == other.sampling;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = ID.hashCode();
+        result = 31 * result + Float.floatToIntBits(blurRadius);
+        result = 31 * result + sampling;
+        return result;
     }
 }

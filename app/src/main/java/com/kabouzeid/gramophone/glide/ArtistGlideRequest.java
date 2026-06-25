@@ -2,25 +2,24 @@ package com.kabouzeid.gramophone.glide;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.bumptech.glide.BitmapRequestBuilder;
-import com.bumptech.glide.DrawableRequestBuilder;
-import com.bumptech.glide.DrawableTypeRequest;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.RequestManager;
+import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.kabouzeid.gramophone.App;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.glide.artistimage.AlbumCover;
 import com.kabouzeid.gramophone.glide.artistimage.ArtistImage;
-import com.kabouzeid.gramophone.glide.palette.BitmapPaletteTranscoder;
 import com.kabouzeid.gramophone.glide.palette.BitmapPaletteWrapper;
 import com.kabouzeid.gramophone.model.Album;
 import com.kabouzeid.gramophone.model.Artist;
@@ -64,15 +63,9 @@ public class ArtistGlideRequest {
             return this;
         }
 
-        public DrawableRequestBuilder<GlideDrawable> build() {
-            //noinspection unchecked
-            return createBaseRequest(requestManager, artist, noCustomImage)
-                    .diskCacheStrategy(DEFAULT_DISK_CACHE_STRATEGY)
-                    .error(DEFAULT_ERROR_IMAGE)
-                    .animate(DEFAULT_ANIMATION)
-                    .priority(Priority.LOW)
-                    .override(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
-                    .signature(createSignature(artist));
+        public RequestBuilder<Drawable> build() {
+            return createBaseRequest(requestManager.load(getLoadModel(artist, noCustomImage)), artist)
+                    .transition(DrawableTransitionOptions.withCrossFade());
         }
     }
 
@@ -83,16 +76,9 @@ public class ArtistGlideRequest {
             this.builder = builder;
         }
 
-        public BitmapRequestBuilder<?, Bitmap> build() {
-            //noinspection unchecked
-            return createBaseRequest(builder.requestManager, builder.artist, builder.noCustomImage)
-                    .asBitmap()
-                    .diskCacheStrategy(DEFAULT_DISK_CACHE_STRATEGY)
-                    .error(DEFAULT_ERROR_IMAGE)
-                    .animate(DEFAULT_ANIMATION)
-                    .priority(Priority.LOW)
-                    .override(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
-                    .signature(createSignature(builder.artist));
+        public RequestBuilder<Bitmap> build() {
+            return createBaseRequest(builder.requestManager.asBitmap()
+                    .load(getLoadModel(builder.artist, builder.noCustomImage)), builder.artist);
         }
     }
 
@@ -105,21 +91,13 @@ public class ArtistGlideRequest {
             this.context = context;
         }
 
-        public BitmapRequestBuilder<?, BitmapPaletteWrapper> build() {
-            //noinspection unchecked
-            return createBaseRequest(builder.requestManager, builder.artist, builder.noCustomImage)
-                    .asBitmap()
-                    .transcode(new BitmapPaletteTranscoder(context), BitmapPaletteWrapper.class)
-                    .diskCacheStrategy(DEFAULT_DISK_CACHE_STRATEGY)
-                    .error(DEFAULT_ERROR_IMAGE)
-                    .animate(DEFAULT_ANIMATION)
-                    .priority(Priority.LOW)
-                    .override(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
-                    .signature(createSignature(builder.artist));
+        public RequestBuilder<BitmapPaletteWrapper> build() {
+            return createBaseRequest(builder.requestManager.as(BitmapPaletteWrapper.class)
+                    .load(getLoadModel(builder.artist, builder.noCustomImage)), builder.artist);
         }
     }
 
-    public static DrawableTypeRequest createBaseRequest(RequestManager requestManager, Artist artist, boolean noCustomImage) {
+    private static Object getLoadModel(Artist artist, boolean noCustomImage) {
         boolean hasCustomImage = CustomArtistImageUtil.getInstance(App.getInstance()).hasCustomArtistImage(artist);
         if (noCustomImage || !hasCustomImage) {
             final List<AlbumCover> songs = new ArrayList<>();
@@ -127,10 +105,19 @@ public class ArtistGlideRequest {
                 final Song song = album.safeGetFirstSong();
                 songs.add(new AlbumCover(album.getYear(), song.data));
             }
-            return requestManager.load(new ArtistImage(artist.getName(), songs));
+            return new ArtistImage(artist.getName(), songs);
         } else {
-            return requestManager.load(CustomArtistImageUtil.getFile(artist));
+            return CustomArtistImageUtil.getFile(artist);
         }
+    }
+
+    private static <T> RequestBuilder<T> createBaseRequest(RequestBuilder<T> requestBuilder, Artist artist) {
+        return requestBuilder.apply(new RequestOptions()
+                .diskCacheStrategy(DEFAULT_DISK_CACHE_STRATEGY)
+                .error(DEFAULT_ERROR_IMAGE)
+                .priority(Priority.LOW)
+                .override(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
+                .signature(createSignature(artist)));
     }
 
     private static Key createSignature(Artist artist) {

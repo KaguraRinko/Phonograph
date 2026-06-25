@@ -13,7 +13,7 @@ import android.view.View;
 import android.widget.RemoteViews;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.transition.Transition;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.Target;
 import com.kabouzeid.appthemehelper.util.MaterialValueHelper;
@@ -97,7 +97,7 @@ public class AppWidgetSmall extends BaseAppWidget {
             @Override
             public void run() {
                 if (target != null) {
-                    Glide.clear(target);
+                    Glide.with(appContext).clear(target);
                 }
                 target = SongGlideRequest.Builder.from(Glide.with(appContext), song)
                         .checkIgnoreMediaStore(appContext)
@@ -105,14 +105,14 @@ public class AppWidgetSmall extends BaseAppWidget {
                         .centerCrop()
                         .into(new SimpleTarget<BitmapPaletteWrapper>(imageSize, imageSize) {
                             @Override
-                            public void onResourceReady(BitmapPaletteWrapper resource, GlideAnimation<? super BitmapPaletteWrapper> glideAnimation) {
+                            public void onResourceReady(BitmapPaletteWrapper resource, Transition<? super BitmapPaletteWrapper> transition) {
                                 Palette palette = resource.getPalette();
                                 update(resource.getBitmap(), palette.getVibrantColor(palette.getMutedColor(MaterialValueHelper.getSecondaryTextColor(appContext, true))));
                             }
 
                             @Override
-                            public void onLoadFailed(Exception e, Drawable errorDrawable) {
-                                super.onLoadFailed(e, errorDrawable);
+                            public void onLoadFailed(Drawable errorDrawable) {
+                                super.onLoadFailed(errorDrawable);
                                 update(null, MaterialValueHelper.getSecondaryTextColor(appContext, true));
                             }
 

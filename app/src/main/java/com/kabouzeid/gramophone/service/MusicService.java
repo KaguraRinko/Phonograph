@@ -35,9 +35,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.bumptech.glide.BitmapRequestBuilder;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.request.transition.Transition;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.appwidgets.AppWidgetBig;
@@ -607,7 +607,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
 
         if (PreferenceUtil.getInstance(this).albumArtOnLockscreen()) {
             final Point screenSize = Util.getScreenSize(MusicService.this);
-            final BitmapRequestBuilder<?, Bitmap> request = SongGlideRequest.Builder.from(Glide.with(MusicService.this), song)
+            final RequestBuilder<Bitmap> request = SongGlideRequest.Builder.from(Glide.with(MusicService.this), song)
                     .checkIgnoreMediaStore(MusicService.this)
                     .asBitmap().build();
             if (PreferenceUtil.getInstance(this).blurredAlbumArt()) {
@@ -618,13 +618,13 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
                 public void run() {
                     request.into(new SimpleTarget<Bitmap>(screenSize.x, screenSize.y) {
                         @Override
-                        public void onLoadFailed(Exception e, Drawable errorDrawable) {
-                            super.onLoadFailed(e, errorDrawable);
+                        public void onLoadFailed(Drawable errorDrawable) {
+                            super.onLoadFailed(errorDrawable);
                             mediaSession.setMetadata(metaData.build());
                         }
 
                         @Override
-                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                        public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                             metaData.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, copy(resource));
                             mediaSession.setMetadata(metaData.build());
                         }

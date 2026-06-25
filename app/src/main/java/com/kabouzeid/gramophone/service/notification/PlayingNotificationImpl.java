@@ -15,7 +15,7 @@ import android.view.View;
 import android.widget.RemoteViews;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.transition.Transition;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.Target;
 import com.kabouzeid.appthemehelper.util.ColorUtil;
@@ -87,20 +87,20 @@ public class PlayingNotificationImpl extends PlayingNotification {
             @Override
             public void run() {
                 if (target != null) {
-                    Glide.clear(target);
+                    Glide.with(service).clear(target);
                 }
                 target = SongGlideRequest.Builder.from(Glide.with(service), song)
                         .checkIgnoreMediaStore(service)
                         .generatePalette(service).build()
                         .into(new SimpleTarget<BitmapPaletteWrapper>(bigNotificationImageSize, bigNotificationImageSize) {
                             @Override
-                            public void onResourceReady(BitmapPaletteWrapper resource, GlideAnimation<? super BitmapPaletteWrapper> glideAnimation) {
+                            public void onResourceReady(BitmapPaletteWrapper resource, Transition<? super BitmapPaletteWrapper> transition) {
                                 update(resource.getBitmap(), PhonographColorUtil.getColor(resource.getPalette(), Color.TRANSPARENT));
                             }
 
                             @Override
-                            public void onLoadFailed(Exception e, Drawable errorDrawable) {
-                                super.onLoadFailed(e, errorDrawable);
+                            public void onLoadFailed(Drawable errorDrawable) {
+                                super.onLoadFailed(errorDrawable);
                                 update(null, Color.WHITE);
                             }
 

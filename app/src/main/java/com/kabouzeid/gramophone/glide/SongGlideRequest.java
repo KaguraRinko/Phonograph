@@ -2,19 +2,18 @@ package com.kabouzeid.gramophone.glide;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import androidx.annotation.NonNull;
 
-import com.bumptech.glide.BitmapRequestBuilder;
-import com.bumptech.glide.DrawableRequestBuilder;
-import com.bumptech.glide.DrawableTypeRequest;
 import com.bumptech.glide.RequestManager;
+import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.signature.MediaStoreSignature;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.glide.audiocover.AudioFileCover;
-import com.kabouzeid.gramophone.glide.palette.BitmapPaletteTranscoder;
 import com.kabouzeid.gramophone.glide.palette.BitmapPaletteWrapper;
 import com.kabouzeid.gramophone.model.Song;
 import com.kabouzeid.gramophone.util.MusicUtil;
@@ -60,13 +59,9 @@ public class SongGlideRequest {
             return this;
         }
 
-        public DrawableRequestBuilder<GlideDrawable> build() {
-            //noinspection unchecked
-            return createBaseRequest(requestManager, song, ignoreMediaStore)
-                    .diskCacheStrategy(DEFAULT_DISK_CACHE_STRATEGY)
-                    .error(DEFAULT_ERROR_IMAGE)
-                    .animate(DEFAULT_ANIMATION)
-                    .signature(createSignature(song));
+        public RequestBuilder<Drawable> build() {
+            return createBaseRequest(requestManager.load(getLoadModel(song, ignoreMediaStore)), song)
+                    .transition(DrawableTransitionOptions.withCrossFade());
         }
     }
 
@@ -77,14 +72,8 @@ public class SongGlideRequest {
             this.builder = builder;
         }
 
-        public BitmapRequestBuilder<?, Bitmap> build() {
-            //noinspection unchecked
-            return createBaseRequest(builder.requestManager, builder.song, builder.ignoreMediaStore)
-                    .asBitmap()
-                    .diskCacheStrategy(DEFAULT_DISK_CACHE_STRATEGY)
-                    .error(DEFAULT_ERROR_IMAGE)
-                    .animate(DEFAULT_ANIMATION)
-                    .signature(createSignature(builder.song));
+        public RequestBuilder<Bitmap> build() {
+            return createBaseRequest(builder.requestManager.asBitmap().load(getLoadModel(builder.song, builder.ignoreMediaStore)), builder.song);
         }
     }
 
@@ -97,24 +86,25 @@ public class SongGlideRequest {
             this.context = context;
         }
 
-        public BitmapRequestBuilder<?, BitmapPaletteWrapper> build() {
-            //noinspection unchecked
-            return createBaseRequest(builder.requestManager, builder.song, builder.ignoreMediaStore)
-                    .asBitmap()
-                    .transcode(new BitmapPaletteTranscoder(context), BitmapPaletteWrapper.class)
-                    .diskCacheStrategy(DEFAULT_DISK_CACHE_STRATEGY)
-                    .error(DEFAULT_ERROR_IMAGE)
-                    .animate(DEFAULT_ANIMATION)
-                    .signature(createSignature(builder.song));
+        public RequestBuilder<BitmapPaletteWrapper> build() {
+            return createBaseRequest(builder.requestManager.as(BitmapPaletteWrapper.class)
+                    .load(getLoadModel(builder.song, builder.ignoreMediaStore)), builder.song);
         }
     }
 
-    public static DrawableTypeRequest createBaseRequest(RequestManager requestManager, Song song, boolean ignoreMediaStore) {
+    private static Object getLoadModel(Song song, boolean ignoreMediaStore) {
         if (ignoreMediaStore) {
-            return requestManager.load(new AudioFileCover(song.data));
+            return new AudioFileCover(song.data);
         } else {
-            return requestManager.loadFromMediaStore(MusicUtil.getMediaStoreAlbumCoverUri(song.albumId));
+            return MusicUtil.getMediaStoreAlbumCoverUri(song.albumId);
         }
+    }
+
+    private static <T> RequestBuilder<T> createBaseRequest(RequestBuilder<T> requestBuilder, Song song) {
+        return requestBuilder.apply(new RequestOptions()
+                .diskCacheStrategy(DEFAULT_DISK_CACHE_STRATEGY)
+                .error(DEFAULT_ERROR_IMAGE)
+                .signature(createSignature(song)));
     }
 
     public static Key createSignature(Song song) {
