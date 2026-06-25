@@ -10,6 +10,9 @@ import android.os.Bundle;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -18,6 +21,7 @@ import androidx.preference.TwoStatePreference;
 import androidx.appcompat.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.afollestad.materialdialogs.color.ColorChooserDialog;
 import com.kabouzeid.appthemehelper.ThemeStore;
@@ -148,9 +152,30 @@ public class SettingsActivity extends AbsBaseActivity implements ColorChooserDia
         @Override
         public void onViewCreated(View view, Bundle savedInstanceState) {
             super.onViewCreated(view, savedInstanceState);
-            getListView().setPadding(0, 0, 0, 0);
+            applyPreferenceListInsets();
             invalidateSettings();
             PreferenceUtil.getInstance(getActivity()).registerOnSharedPreferenceChangedListener(this);
+        }
+
+        private void applyPreferenceListInsets() {
+            final ViewGroup listView = getListView();
+            listView.setClipToPadding(false);
+
+            final int initialLeft = listView.getPaddingLeft();
+            final int initialTop = listView.getPaddingTop();
+            final int initialRight = listView.getPaddingRight();
+            final int initialBottom = listView.getPaddingBottom();
+            if (Build.VERSION.SDK_INT < 35) {
+                listView.setPadding(0, 0, 0, 0);
+                return;
+            }
+
+            ViewCompat.setOnApplyWindowInsetsListener(listView, (insetView, windowInsets) -> {
+                Insets navigationBars = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
+                insetView.setPadding(initialLeft, initialTop, initialRight, initialBottom + navigationBars.bottom);
+                return windowInsets;
+            });
+            ViewCompat.requestApplyInsets(listView);
         }
 
         @Override
