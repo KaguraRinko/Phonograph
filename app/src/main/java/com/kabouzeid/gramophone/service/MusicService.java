@@ -59,6 +59,9 @@ import com.kabouzeid.gramophone.service.notification.PlayingNotification;
 import com.kabouzeid.gramophone.service.notification.PlayingNotificationImpl;
 import com.kabouzeid.gramophone.service.notification.PlayingNotificationImpl24;
 import com.kabouzeid.gramophone.service.playback.Playback;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
+import com.kabouzeid.gramophone.subsonic.SubsonicServer;
+import com.kabouzeid.gramophone.subsonic.SubsonicUri;
 import com.kabouzeid.gramophone.util.MusicUtil;
 import com.kabouzeid.gramophone.util.PendingIntentUtil;
 import com.kabouzeid.gramophone.util.PreferenceUtil;
@@ -176,7 +179,15 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
 
     private Handler uiThreadHandler;
 
-    private static String getTrackUri(@NonNull Song song) {
+    private String getTrackUri(@NonNull Song song) {
+        if (SubsonicUri.isSubsonicUri(song.data)) {
+            long serverId = SubsonicUri.getServerId(song.data);
+            String sourceId = MediaSourceManager.toSubsonicSourceId(serverId);
+            if (serverId != SubsonicServer.NO_ID && MediaSourceManager.getSource(this, sourceId) != null) {
+                return MediaSourceManager.getRepository(this, sourceId).resolveSongUri(this, song);
+            }
+            return song.data;
+        }
         return MusicUtil.getSongFileUri(song.id).toString();
     }
 
