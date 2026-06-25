@@ -14,7 +14,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.afollestad.materialcab.MaterialCab;
+import com.kabouzeid.gramophone.ui.cab.MaterialCab;
 import com.bumptech.glide.Glide;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.glide.SongGlideRequest;
