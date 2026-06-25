@@ -13,7 +13,7 @@ public class SubsonicAlbum {
     public Integer songCount;
     public Integer duration;
     public Integer playCount;
-    public Integer created;
+    public String created;
     public Integer year;
     public String genre;
     @SerializedName("song")

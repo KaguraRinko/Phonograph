@@ -74,7 +74,12 @@ public class SubsonicRestClient {
 
     @NonNull
     public static SubsonicResponse execute(@NonNull Call<SubsonicResponseEnvelope> call) throws IOException, SubsonicException {
-        Response<SubsonicResponseEnvelope> response = call.execute();
+        Response<SubsonicResponseEnvelope> response;
+        try {
+            response = call.execute();
+        } catch (RuntimeException e) {
+            throw new IOException("Subsonic response parse failed: " + e.getMessage(), e);
+        }
         SubsonicResponseEnvelope envelope = response.body();
         if (!response.isSuccessful() || envelope == null || envelope.response == null) {
             throw new IOException("Subsonic request failed: HTTP " + response.code());
