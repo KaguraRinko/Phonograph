@@ -100,6 +100,13 @@ public class MediaSourceManager {
 
     @NonNull
     public static MusicRepository getRepository(@NonNull Context context, @NonNull String sourceId) {
+        if (isSubsonicSource(sourceId)) {
+            long serverId = getSubsonicServerId(sourceId);
+            SubsonicServer server = SubsonicServerStore.getInstance(context).getServer(serverId);
+            if (server != null) {
+                return new SubsonicMusicRepository(server);
+            }
+        }
         return new LocalMusicRepository(context);
     }
 
