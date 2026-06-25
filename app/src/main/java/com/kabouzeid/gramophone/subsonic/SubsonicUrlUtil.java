@@ -1,6 +1,7 @@
 package com.kabouzeid.gramophone.subsonic;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.Map;
 
@@ -37,6 +38,15 @@ public class SubsonicUrlUtil {
                                               @NonNull String endpoint,
                                               @NonNull Map<String, String> authParams,
                                               @NonNull String id) {
+        return buildRestEndpointUrl(server, endpoint, authParams, id, null);
+    }
+
+    @NonNull
+    public static String buildRestEndpointUrl(@NonNull SubsonicServer server,
+                                              @NonNull String endpoint,
+                                              @NonNull Map<String, String> authParams,
+                                              @NonNull String id,
+                                              @Nullable Map<String, String> extraParams) {
         HttpUrl baseUrl = HttpUrl.parse(getRestBaseUrl(server.baseUrl) + endpoint + ".view");
         if (baseUrl == null) {
             throw new IllegalArgumentException("Invalid Subsonic server URL: " + server.baseUrl);
@@ -46,6 +56,11 @@ public class SubsonicUrlUtil {
             builder.addQueryParameter(entry.getKey(), entry.getValue());
         }
         builder.addQueryParameter("id", id);
+        if (extraParams != null) {
+            for (Map.Entry<String, String> entry : extraParams.entrySet()) {
+                builder.addQueryParameter(entry.getKey(), entry.getValue());
+            }
+        }
         return builder.build().toString();
     }
 }

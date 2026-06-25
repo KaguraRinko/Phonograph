@@ -13,6 +13,8 @@ import com.kabouzeid.gramophone.subsonic.rest.model.SubsonicResponseEnvelope;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import okhttp3.Cache;
@@ -64,7 +66,28 @@ public class SubsonicRestClient {
 
     @NonNull
     public String buildStreamUrl(@NonNull String remoteSongId) {
-        return SubsonicUrlUtil.buildRestEndpointUrl(server, "stream", createAuthParams(), remoteSongId);
+        return SubsonicUrlUtil.buildRestEndpointUrl(
+                server,
+                "stream",
+                createAuthParams(),
+                remoteSongId,
+                Collections.singletonMap("format", "raw"));
+    }
+
+    @NonNull
+    public String buildTranscodedStreamUrl(@NonNull String remoteSongId,
+                                           int maxBitRate,
+                                           @NonNull String format) {
+        Map<String, String> streamParams = new LinkedHashMap<>();
+        streamParams.put("format", format.trim().isEmpty() ? "mp3" : format);
+        streamParams.put("maxBitRate", String.valueOf(Math.max(maxBitRate, 1)));
+        streamParams.put("estimateContentLength", "true");
+        return SubsonicUrlUtil.buildRestEndpointUrl(
+                server,
+                "stream",
+                createAuthParams(),
+                remoteSongId,
+                streamParams);
     }
 
     @NonNull
