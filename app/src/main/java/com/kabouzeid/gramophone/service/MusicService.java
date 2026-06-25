@@ -1145,7 +1145,8 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         if (duration > 0) {
             return duration;
         }
-        if (playbackAttempt == PlaybackAttempt.NATIVE_SUBSONIC_TRANSCODE) {
+        if (playbackAttempt == PlaybackAttempt.NATIVE_SUBSONIC_TRANSCODE
+                || playbackAttempt == PlaybackAttempt.FFMPEG_RAW) {
             long songDuration = getCurrentSong().duration;
             if (songDuration > 0) {
                 return safeDurationToInt(songDuration);
@@ -1162,10 +1163,15 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         if (bufferedProgressPercent >= 100) {
             return duration;
         }
-        if (playbackAttempt == PlaybackAttempt.NATIVE_SUBSONIC_TRANSCODE) {
+        int playbackBufferedPosition = playback.bufferedPosition();
+        if (playbackBufferedPosition > 0) {
+            return playbackBufferedPosition;
+        }
+        if (playbackAttempt == PlaybackAttempt.NATIVE_SUBSONIC_TRANSCODE
+                || playbackAttempt == PlaybackAttempt.FFMPEG_RAW) {
             return Math.round(duration * (bufferedProgressPercent / 100f));
         }
-        return playback.bufferedPosition();
+        return playbackBufferedPosition;
     }
 
     private int safeDurationToInt(long duration) {

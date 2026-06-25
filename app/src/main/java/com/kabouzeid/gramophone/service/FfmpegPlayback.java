@@ -63,6 +63,9 @@ public class FfmpegPlayback implements Playback {
                 @Override
                 public void onEvents(@NonNull Player player, @NonNull Player.Events events) {
                     bufferedPercent = Math.max(0, Math.min(100, player.getBufferedPercentage()));
+                    if (callbacks != null) {
+                        callbacks.onBufferingProgressChanged(bufferedPercent);
+                    }
                 }
             });
             return exoPlayer;
