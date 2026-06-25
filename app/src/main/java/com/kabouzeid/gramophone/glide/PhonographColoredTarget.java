@@ -32,7 +32,7 @@ public abstract class PhonographColoredTarget extends BitmapPaletteTarget {
     }
 
     protected int getAlbumArtistFooterColor() {
-        return ATHUtil.resolveColor(getView().getContext(), R.attr.cardBackgroundColor);
+        return ATHUtil.resolveColor(getView().getContext(), androidx.cardview.R.attr.cardBackgroundColor);
     }
 
     public abstract void onColorReady(int color);

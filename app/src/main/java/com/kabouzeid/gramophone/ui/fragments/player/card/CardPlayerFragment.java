@@ -130,7 +130,7 @@ public class CardPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
         });
 
         // for some reason the xml attribute doesn't get applied here.
-        playingQueueCard.setCardBackgroundColor(ATHUtil.resolveColor(getActivity(), R.attr.cardBackgroundColor));
+        playingQueueCard.setCardBackgroundColor(ATHUtil.resolveColor(getActivity(), androidx.cardview.R.attr.cardBackgroundColor));
     }
 
     @Override
