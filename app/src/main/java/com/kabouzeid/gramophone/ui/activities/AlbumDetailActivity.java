@@ -45,6 +45,7 @@ import com.kabouzeid.gramophone.misc.SimpleObservableScrollViewCallbacks;
 import com.kabouzeid.gramophone.misc.WrappedAsyncTaskLoader;
 import com.kabouzeid.gramophone.model.Album;
 import com.kabouzeid.gramophone.model.Song;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.ui.activities.base.AbsSlidingMusicPanelActivity;
 import com.kabouzeid.gramophone.ui.activities.tageditor.AbsTagEditorActivity;
 import com.kabouzeid.gramophone.ui.activities.tageditor.AlbumTagEditorActivity;
@@ -98,10 +99,12 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
     private Spanned wiki;
     private MaterialDialog wikiDialog;
     private LastFMRestClient lastFMRestClient;
+    private String sourceId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sourceId = NavigationUtil.getSourceId(this);
         setDrawUnderStatusbar();
         recyclerView = findViewById(R.id.list);
         albumArtImageView = findViewById(R.id.image);
@@ -156,7 +159,7 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
         setUpSongsAdapter();
         artistTextView.setOnClickListener(v -> {
             if (album != null) {
-                NavigationUtil.goToArtist(AlbumDetailActivity.this, album.getArtistId());
+                NavigationUtil.goToArtist(AlbumDetailActivity.this, sourceId, album.getArtistId());
             }
         });
         setColors(DialogUtils.resolveColor(this, R.attr.defaultFooterColor));
@@ -320,7 +323,7 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
                 startActivityForResult(intent, TAG_EDITOR_REQUEST);
                 return true;
                     } else if (id == R.id.action_go_to_artist) {
-                NavigationUtil.goToArtist(this, getAlbum().getArtistId());
+                NavigationUtil.goToArtist(this, sourceId, getAlbum().getArtistId());
                 return true;
                     } else if (id == R.id.action_wiki) {
                 if (wikiDialog == null) {
@@ -394,7 +397,9 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
     @Override
     public void onMediaStoreChanged() {
         super.onMediaStoreChanged();
-        reload();
+        if (MediaSourceManager.isLocalSource(sourceId)) {
+            reload();
+        }
     }
 
     @Override
@@ -427,7 +432,7 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
 
     @Override
     public Loader<Album> onCreateLoader(int id, Bundle args) {
-        return new AsyncAlbumLoader(this, args.getLong(EXTRA_ALBUM_ID));
+        return new AsyncAlbumLoader(this, args.getLong(EXTRA_ALBUM_ID), NavigationUtil.getSourceId(this, args));
     }
 
     @Override
@@ -443,15 +448,17 @@ public class AlbumDetailActivity extends AbsSlidingMusicPanelActivity implements
 
     private static class AsyncAlbumLoader extends WrappedAsyncTaskLoader<Album> {
         private final long albumId;
+        private final String sourceId;
 
-        public AsyncAlbumLoader(Context context, long albumId) {
+        public AsyncAlbumLoader(Context context, long albumId, @NonNull String sourceId) {
             super(context);
             this.albumId = albumId;
+            this.sourceId = sourceId;
         }
 
         @Override
         public Album loadInBackground() {
-            return AlbumLoader.getAlbum(getContext(), albumId);
+            return MediaSourceManager.getRepository(getContext(), sourceId).getAlbum(getContext(), albumId);
         }
     }
 }

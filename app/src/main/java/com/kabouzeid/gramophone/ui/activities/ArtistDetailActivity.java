@@ -52,6 +52,7 @@ import com.kabouzeid.gramophone.misc.SimpleObservableScrollViewCallbacks;
 import com.kabouzeid.gramophone.misc.WrappedAsyncTaskLoader;
 import com.kabouzeid.gramophone.model.Artist;
 import com.kabouzeid.gramophone.model.Song;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.ui.activities.base.AbsSlidingMusicPanelActivity;
 import com.kabouzeid.gramophone.util.CustomArtistImageUtil;
 import com.kabouzeid.gramophone.util.MusicUtil;
@@ -97,6 +98,7 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
     private ArtistSongAdapter songAdapter;
 
     private LastFMRestClient lastFMRestClient;
+    private String sourceId;
 
     private final SimpleObservableScrollViewCallbacks observableScrollViewCallbacks = new SimpleObservableScrollViewCallbacks() {
         @Override
@@ -117,6 +119,7 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sourceId = NavigationUtil.getSourceId(this);
         setDrawUnderStatusbar();
         songListView = findViewById(R.id.list);
         artistImage = findViewById(R.id.image);
@@ -415,7 +418,9 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
     @Override
     public void onMediaStoreChanged() {
         super.onMediaStoreChanged();
-        reload();
+        if (MediaSourceManager.isLocalSource(sourceId)) {
+            reload();
+        }
     }
 
     @Override
@@ -448,7 +453,7 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
 
     @Override
     public Loader<Artist> onCreateLoader(int id, Bundle args) {
-        return new AsyncArtistDataLoader(this, args.getLong(EXTRA_ARTIST_ID));
+        return new AsyncArtistDataLoader(this, args.getLong(EXTRA_ARTIST_ID), NavigationUtil.getSourceId(this, args));
     }
 
     @Override
@@ -465,15 +470,17 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
 
     private static class AsyncArtistDataLoader extends WrappedAsyncTaskLoader<Artist> {
         private final long artistId;
+        private final String sourceId;
 
-        public AsyncArtistDataLoader(Context context, long artistId) {
+        public AsyncArtistDataLoader(Context context, long artistId, @NonNull String sourceId) {
             super(context);
             this.artistId = artistId;
+            this.sourceId = sourceId;
         }
 
         @Override
         public Artist loadInBackground() {
-            return ArtistLoader.getArtist(getContext(), artistId);
+            return MediaSourceManager.getRepository(getContext(), sourceId).getArtist(getContext(), artistId);
         }
     }
 }

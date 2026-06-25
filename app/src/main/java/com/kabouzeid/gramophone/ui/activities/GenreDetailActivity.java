@@ -25,7 +25,9 @@ import com.kabouzeid.gramophone.loader.GenreLoader;
 import com.kabouzeid.gramophone.misc.WrappedAsyncTaskLoader;
 import com.kabouzeid.gramophone.model.Genre;
 import com.kabouzeid.gramophone.model.Song;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.ui.activities.base.AbsSlidingMusicPanelActivity;
+import com.kabouzeid.gramophone.util.NavigationUtil;
 import com.kabouzeid.gramophone.util.PhonographColorUtil;
 import com.kabouzeid.gramophone.util.ViewUtil;
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
@@ -48,12 +50,14 @@ public class GenreDetailActivity extends AbsSlidingMusicPanelActivity implements
 
     private MaterialCab cab;
     private SongAdapter adapter;
+    private String sourceId;
 
     private RecyclerView.Adapter wrappedAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sourceId = NavigationUtil.getSourceId(this);
         setDrawUnderStatusbar();
         recyclerView = findViewById(R.id.recycler_view);
         toolbar = findViewById(R.id.toolbar);
@@ -69,7 +73,7 @@ public class GenreDetailActivity extends AbsSlidingMusicPanelActivity implements
 
         setUpToolBar();
 
-        getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+        getSupportLoaderManager().initLoader(LOADER_ID, getIntent().getExtras(), this);
     }
 
     @Override
@@ -145,7 +149,9 @@ public class GenreDetailActivity extends AbsSlidingMusicPanelActivity implements
     @Override
     public void onMediaStoreChanged() {
         super.onMediaStoreChanged();
-        getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
+        if (MediaSourceManager.isLocalSource(sourceId)) {
+            getSupportLoaderManager().restartLoader(LOADER_ID, getIntent().getExtras(), this);
+        }
     }
 
     private void checkIsEmpty() {
@@ -173,7 +179,7 @@ public class GenreDetailActivity extends AbsSlidingMusicPanelActivity implements
     @Override
     @NonNull
     public Loader<List<Song>> onCreateLoader(int id, Bundle args) {
-        return new GenreDetailActivity.AsyncGenreSongLoader(this, genre);
+        return new GenreDetailActivity.AsyncGenreSongLoader(this, genre, NavigationUtil.getSourceId(this, args));
     }
 
     @Override
@@ -190,15 +196,17 @@ public class GenreDetailActivity extends AbsSlidingMusicPanelActivity implements
 
     private static class AsyncGenreSongLoader extends WrappedAsyncTaskLoader<List<Song>> {
         private final Genre genre;
+        private final String sourceId;
 
-        public AsyncGenreSongLoader(Context context, Genre genre) {
+        public AsyncGenreSongLoader(Context context, Genre genre, @NonNull String sourceId) {
             super(context);
             this.genre = genre;
+            this.sourceId = sourceId;
         }
 
         @Override
         public List<Song> loadInBackground() {
-            return GenreLoader.getSongs(getContext(), genre.id);
+            return MediaSourceManager.getRepository(getContext(), sourceId).getSongsForGenre(getContext(), genre.id);
         }
     }
 }

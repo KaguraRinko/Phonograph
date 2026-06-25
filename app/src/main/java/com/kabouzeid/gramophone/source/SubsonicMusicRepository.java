@@ -17,7 +17,9 @@ import com.kabouzeid.gramophone.subsonic.SubsonicServer;
 import com.kabouzeid.gramophone.subsonic.SubsonicUri;
 import com.kabouzeid.gramophone.subsonic.rest.SubsonicRestClient;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class SubsonicMusicRepository implements MusicRepository {
     private final SubsonicServer server;
@@ -61,7 +63,15 @@ public class SubsonicMusicRepository implements MusicRepository {
     @NonNull
     @Override
     public List<Album> getAlbums(@NonNull Context context, @NonNull String query) {
-        return AlbumLoader.splitIntoAlbums(getSongs(context, query));
+        String lowerCaseQuery = query.toLowerCase(Locale.ROOT);
+        List<Album> results = new ArrayList<>();
+        for (Album album : getAllAlbums(context)) {
+            if (album.getTitle().toLowerCase(Locale.ROOT).contains(lowerCaseQuery)
+                    || album.getArtistName().toLowerCase(Locale.ROOT).contains(lowerCaseQuery)) {
+                results.add(album);
+            }
+        }
+        return results;
     }
 
     @NonNull
@@ -79,7 +89,14 @@ public class SubsonicMusicRepository implements MusicRepository {
     @NonNull
     @Override
     public List<Artist> getArtists(@NonNull Context context, @NonNull String query) {
-        return ArtistLoader.splitIntoArtists(getAlbums(context, query));
+        String lowerCaseQuery = query.toLowerCase(Locale.ROOT);
+        List<Artist> results = new ArrayList<>();
+        for (Artist artist : getAllArtists(context)) {
+            if (artist.getName().toLowerCase(Locale.ROOT).contains(lowerCaseQuery)) {
+                results.add(artist);
+            }
+        }
+        return results;
     }
 
     @NonNull

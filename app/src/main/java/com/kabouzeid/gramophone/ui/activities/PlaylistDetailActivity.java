@@ -34,7 +34,9 @@ import com.kabouzeid.gramophone.misc.WrappedAsyncTaskLoader;
 import com.kabouzeid.gramophone.model.AbsCustomPlaylist;
 import com.kabouzeid.gramophone.model.Playlist;
 import com.kabouzeid.gramophone.model.Song;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.ui.activities.base.AbsSlidingMusicPanelActivity;
+import com.kabouzeid.gramophone.util.NavigationUtil;
 import com.kabouzeid.gramophone.util.PhonographColorUtil;
 import com.kabouzeid.gramophone.util.PlaylistsUtil;
 import com.kabouzeid.gramophone.util.ViewUtil;
@@ -59,6 +61,7 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
 
     private MaterialCab cab;
     private SongAdapter adapter;
+    private String sourceId;
 
     private RecyclerView.Adapter wrappedAdapter;
     private RecyclerViewDragDropManager recyclerViewDragDropManager;
@@ -66,6 +69,7 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sourceId = NavigationUtil.getSourceId(this);
         setDrawUnderStatusbar();
         recyclerView = findViewById(R.id.recycler_view);
         toolbar = findViewById(R.id.toolbar);
@@ -81,7 +85,7 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
 
         setUpToolbar();
 
-        getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+        getSupportLoaderManager().initLoader(LOADER_ID, getIntent().getExtras(), this);
     }
 
     @Override
@@ -180,6 +184,11 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
     public void onMediaStoreChanged() {
         super.onMediaStoreChanged();
 
+        if (!MediaSourceManager.isLocalSource(sourceId)) {
+            getSupportLoaderManager().restartLoader(LOADER_ID, getIntent().getExtras(), this);
+            return;
+        }
+
         if (!(playlist instanceof AbsCustomPlaylist)) {
             // Playlist deleted
             if (!PlaylistsUtil.doesPlaylistExist(this, playlist.id)) {
@@ -236,7 +245,7 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
 
     @Override
     public Loader<List<Song>> onCreateLoader(int id, Bundle args) {
-        return new AsyncPlaylistSongLoader(this, playlist);
+        return new AsyncPlaylistSongLoader(this, playlist, NavigationUtil.getSourceId(this, args));
     }
 
     @Override
@@ -253,20 +262,17 @@ public class PlaylistDetailActivity extends AbsSlidingMusicPanelActivity impleme
 
     private static class AsyncPlaylistSongLoader extends WrappedAsyncTaskLoader<List<Song>> {
         private final Playlist playlist;
+        private final String sourceId;
 
-        public AsyncPlaylistSongLoader(Context context, Playlist playlist) {
+        public AsyncPlaylistSongLoader(Context context, Playlist playlist, @NonNull String sourceId) {
             super(context);
             this.playlist = playlist;
+            this.sourceId = sourceId;
         }
 
         @Override
         public List<Song> loadInBackground() {
-            if (playlist instanceof AbsCustomPlaylist) {
-                return ((AbsCustomPlaylist) playlist).getSongs(getContext());
-            } else {
-                //noinspection unchecked
-                return (List) PlaylistSongLoader.getPlaylistSongList(getContext(), playlist.id);
-            }
+            return MediaSourceManager.getRepository(getContext(), sourceId).getSongsForPlaylist(getContext(), playlist);
         }
     }
 }

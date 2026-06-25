@@ -19,10 +19,9 @@ import com.kabouzeid.appthemehelper.ThemeStore;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.adapter.SearchAdapter;
 import com.kabouzeid.gramophone.interfaces.LoaderIds;
-import com.kabouzeid.gramophone.loader.AlbumLoader;
-import com.kabouzeid.gramophone.loader.ArtistLoader;
-import com.kabouzeid.gramophone.loader.SongLoader;
 import com.kabouzeid.gramophone.misc.WrappedAsyncTaskLoader;
+import com.kabouzeid.gramophone.source.MediaSourceManager;
+import com.kabouzeid.gramophone.source.MusicRepository;
 import com.kabouzeid.gramophone.ui.activities.base.AbsMusicServiceActivity;
 import com.kabouzeid.gramophone.util.Util;
 
@@ -190,19 +189,22 @@ public class SearchActivity extends AbsMusicServiceActivity implements SearchVie
         public List<Object> loadInBackground() {
             List<Object> results = new ArrayList<>();
             if (!TextUtils.isEmpty(query)) {
-                List songs = SongLoader.getSongs(getContext(), query.trim());
+                MusicRepository repository = MediaSourceManager.getCurrentRepository(getContext());
+                String trimmedQuery = query.trim();
+
+                List songs = repository.getSongs(getContext(), trimmedQuery);
                 if (!songs.isEmpty()) {
                     results.add(getContext().getResources().getString(R.string.songs));
                     results.addAll(songs);
                 }
 
-                List artists = ArtistLoader.getArtists(getContext(), query.trim());
+                List artists = repository.getArtists(getContext(), trimmedQuery);
                 if (!artists.isEmpty()) {
                     results.add(getContext().getResources().getString(R.string.artists));
                     results.addAll(artists);
                 }
 
-                List albums = AlbumLoader.getAlbums(getContext(), query.trim());
+                List albums = repository.getAlbums(getContext(), trimmedQuery);
                 if (!albums.isEmpty()) {
                     results.add(getContext().getResources().getString(R.string.albums));
                     results.addAll(albums);
