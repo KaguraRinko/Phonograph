@@ -1062,7 +1062,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     }
 
     private void sendChangeInternal(final String what) {
-        sendBroadcast(new Intent(what));
+        sendBroadcast(new Intent(what).setPackage(getPackageName()));
         appWidgetBig.notifyChange(this, what);
         appWidgetClassic.notifyChange(this, what);
         appWidgetSmall.notifyChange(this, what);
