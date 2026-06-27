@@ -18,7 +18,7 @@ import java.util.List;
 
 public class SubsonicLibraryStore extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "subsonic_library.db";
-    private static final int VERSION = 2;
+    private static final int VERSION = 3;
 
     private static final String TABLE_ID_MAP = "id_map";
     private static final String TABLE_SONGS = "songs";
@@ -45,6 +45,12 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
     private static final String COLUMN_PLAYED = "played";
     private static final String COLUMN_PLAY_COUNT = "play_count";
     private static final String COLUMN_USER_RATING = "user_rating";
+    private static final String COLUMN_FILE_SIZE = "file_size";
+    private static final String COLUMN_CONTENT_TYPE = "content_type";
+    private static final String COLUMN_SUFFIX = "suffix";
+    private static final String COLUMN_PATH = "path";
+    private static final String COLUMN_BIT_RATE = "bit_rate";
+    private static final String COLUMN_SAMPLING_RATE = "sampling_rate";
     private static final String COLUMN_NAME = "name";
     private static final String COLUMN_SONG_COUNT = "song_count";
     private static final String COLUMN_PLAYLIST_ID = "playlist_id";
@@ -101,7 +107,13 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
                 + COLUMN_COVER_ART + " TEXT,"
                 + COLUMN_PLAYED + " INTEGER NOT NULL DEFAULT 0,"
                 + COLUMN_PLAY_COUNT + " INTEGER NOT NULL DEFAULT 0,"
-                + COLUMN_USER_RATING + " INTEGER NOT NULL DEFAULT 0"
+                + COLUMN_USER_RATING + " INTEGER NOT NULL DEFAULT 0,"
+                + COLUMN_FILE_SIZE + " INTEGER NOT NULL DEFAULT 0,"
+                + COLUMN_CONTENT_TYPE + " TEXT,"
+                + COLUMN_SUFFIX + " TEXT,"
+                + COLUMN_PATH + " TEXT,"
+                + COLUMN_BIT_RATE + " INTEGER NOT NULL DEFAULT 0,"
+                + COLUMN_SAMPLING_RATE + " INTEGER NOT NULL DEFAULT 0"
                 + ");");
         db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_GENRES + " ("
                 + COLUMN_SERVER_ID + " INTEGER NOT NULL,"
@@ -134,6 +146,20 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
                     + COLUMN_PLAY_COUNT + " INTEGER NOT NULL DEFAULT 0;");
             db.execSQL("ALTER TABLE " + TABLE_SONGS + " ADD COLUMN "
                     + COLUMN_USER_RATING + " INTEGER NOT NULL DEFAULT 0;");
+        }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE " + TABLE_SONGS + " ADD COLUMN "
+                    + COLUMN_FILE_SIZE + " INTEGER NOT NULL DEFAULT 0;");
+            db.execSQL("ALTER TABLE " + TABLE_SONGS + " ADD COLUMN "
+                    + COLUMN_CONTENT_TYPE + " TEXT;");
+            db.execSQL("ALTER TABLE " + TABLE_SONGS + " ADD COLUMN "
+                    + COLUMN_SUFFIX + " TEXT;");
+            db.execSQL("ALTER TABLE " + TABLE_SONGS + " ADD COLUMN "
+                    + COLUMN_PATH + " TEXT;");
+            db.execSQL("ALTER TABLE " + TABLE_SONGS + " ADD COLUMN "
+                    + COLUMN_BIT_RATE + " INTEGER NOT NULL DEFAULT 0;");
+            db.execSQL("ALTER TABLE " + TABLE_SONGS + " ADD COLUMN "
+                    + COLUMN_SAMPLING_RATE + " INTEGER NOT NULL DEFAULT 0;");
             return;
         }
         dropTables(db);
@@ -363,6 +389,43 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
     }
 
     @Nullable
+    public synchronized CachedSongDetails getSongDetails(long serverId, long songId) {
+        Cursor cursor = getReadableDatabase().query(
+                TABLE_SONGS,
+                new String[]{
+                        COLUMN_TITLE,
+                        COLUMN_PATH,
+                        COLUMN_FILE_SIZE,
+                        COLUMN_CONTENT_TYPE,
+                        COLUMN_SUFFIX,
+                        COLUMN_BIT_RATE,
+                        COLUMN_SAMPLING_RATE
+                },
+                COLUMN_SERVER_ID + "=? AND " + COLUMN_LOCAL_ID + "=?",
+                new String[]{String.valueOf(serverId), String.valueOf(songId)},
+                null,
+                null,
+                null
+        );
+        try {
+            if (!cursor.moveToFirst()) {
+                return null;
+            }
+            return new CachedSongDetails(
+                    cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TITLE)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PATH)),
+                    cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_FILE_SIZE)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CONTENT_TYPE)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SUFFIX)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_BIT_RATE)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_SAMPLING_RATE))
+            );
+        } finally {
+            cursor.close();
+        }
+    }
+
+    @Nullable
     public synchronized String getCoverArt(long serverId, long songId) {
         Cursor cursor = getReadableDatabase().query(
                 TABLE_SONGS,
@@ -466,6 +529,12 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
         values.put(COLUMN_PLAYED, song.played);
         values.put(COLUMN_PLAY_COUNT, song.playCount);
         values.put(COLUMN_USER_RATING, song.userRating);
+        values.put(COLUMN_FILE_SIZE, song.fileSize);
+        values.put(COLUMN_CONTENT_TYPE, song.contentType);
+        values.put(COLUMN_SUFFIX, song.suffix);
+        values.put(COLUMN_PATH, song.path);
+        values.put(COLUMN_BIT_RATE, song.bitRate);
+        values.put(COLUMN_SAMPLING_RATE, song.samplingRate);
         db.insert(TABLE_SONGS, null, values);
     }
 
@@ -595,12 +664,20 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
         public final long played;
         public final int playCount;
         public final int userRating;
+        public final long fileSize;
+        public final String contentType;
+        public final String suffix;
+        public final String path;
+        public final int bitRate;
+        public final int samplingRate;
 
         public CachedSong(@NonNull String remoteId, @NonNull String title, int trackNumber, int year,
                           long duration, @Nullable String remoteAlbumId, @NonNull String albumName,
                           @Nullable String remoteArtistId, @NonNull String artistName,
                           @Nullable String genre, @Nullable String coverArt, long created,
-                          long played, int playCount, int userRating) {
+                          long played, int playCount, int userRating, long fileSize,
+                          @Nullable String contentType, @Nullable String suffix,
+                          @Nullable String path, int bitRate, int samplingRate) {
             this.remoteId = remoteId;
             this.title = title;
             this.trackNumber = trackNumber;
@@ -616,6 +693,34 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
             this.played = played;
             this.playCount = playCount;
             this.userRating = userRating;
+            this.fileSize = fileSize;
+            this.contentType = contentType;
+            this.suffix = suffix;
+            this.path = path;
+            this.bitRate = bitRate;
+            this.samplingRate = samplingRate;
+        }
+    }
+
+    public static class CachedSongDetails {
+        public final String title;
+        public final String path;
+        public final long fileSize;
+        public final String contentType;
+        public final String suffix;
+        public final int bitRate;
+        public final int samplingRate;
+
+        public CachedSongDetails(@NonNull String title, @Nullable String path, long fileSize,
+                                 @Nullable String contentType, @Nullable String suffix,
+                                 int bitRate, int samplingRate) {
+            this.title = title;
+            this.path = path;
+            this.fileSize = fileSize;
+            this.contentType = contentType;
+            this.suffix = suffix;
+            this.bitRate = bitRate;
+            this.samplingRate = samplingRate;
         }
     }
 

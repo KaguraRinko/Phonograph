@@ -204,7 +204,13 @@ public class SubsonicSyncer {
                 parseSubsonicTime(child.created),
                 parseSubsonicTime(child.played),
                 safeInt(child.playCount),
-                safeInt(child.userRating)
+                safeInt(child.userRating),
+                safeLong(child.size),
+                safeString(child.contentType, null),
+                safeString(child.suffix, null),
+                safeString(child.path, null),
+                safeInt(child.bitRate),
+                safeInt(child.samplingRate)
         );
     }
 
@@ -244,6 +250,10 @@ public class SubsonicSyncer {
     }
 
     private int safeInt(@Nullable Integer value) {
+        return value == null ? 0 : value;
+    }
+
+    private long safeLong(@Nullable Long value) {
         return value == null ? 0 : value;
     }
 

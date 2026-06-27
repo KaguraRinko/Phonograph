@@ -15,6 +15,7 @@ public class SubsonicChild {
     public String suffix;
     public Integer duration;
     public Integer bitRate;
+    public Integer samplingRate;
     public Integer playCount;
     public Integer userRating;
     public String path;
