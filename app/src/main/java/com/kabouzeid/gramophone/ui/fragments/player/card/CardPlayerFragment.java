@@ -345,7 +345,7 @@ public class CardPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
                     return null;
                 }
                 boolean allowOnline = PreferenceUtil.getInstance(context).onlineLyricsAutoMatch();
-                String data = LyricsRepository.createDefault()
+                String data = LyricsRepository.createConfigured(context.getApplicationContext())
                         .getLyrics(context.getApplicationContext(), song, allowOnline);
                 if (TextUtils.isEmpty(data)) {
                     return null;

@@ -18,6 +18,12 @@
             android:summary="@string/pref_summary_online_lyrics_auto_match"
             android:title="@string/pref_title_online_lyrics_auto_match" />
 
+        <com.kabouzeid.gramophone.preferences.LyricsProviderPreference
+            app:iconSpaceReserved="false"
+            android:key="lyrics_providers"
+            android:summary="@string/pref_summary_lyrics_providers"
+            android:title="@string/lyrics_providers" />
+
     </com.kabouzeid.appthemehelper.common.prefs.supportv7.ATEPreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

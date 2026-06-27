@@ -107,6 +107,11 @@
     <string name="lyrics_search_result_synced">Synced</string>
     <string name="lyrics_search_result_plain">Plain text</string>
     <string name="lyrics_search_result_format">%1$s / %2$s\n%3$s - %4$s</string>
+    <string name="lyrics_providers">Lyrics providers</string>
+    <string name="lyrics_provider_lrclib">LRCLIB</string>
+    <string name="lyrics_provider_netease">NetEase Cloud Music</string>
+    <string name="lyrics_provider_kugou">KuGou</string>
+    <string name="lyrics_provider_qq_music">QQ Music</string>
     <string name="light_theme_name">Light</string>
     <string name="dark_theme_name">Dark</string>
     <string name="black_theme_name">Black (AMOLED)</string>
@@ -178,6 +183,7 @@
     <string name="pref_summary_audio_ducking">Notifications, navigation etc.</string>
     <string name="pref_summary_synchronized_lyrics_show">Currently only synchronized lyrics in LRC format are supported. Either embedded or as a separate file.</string>
     <string name="pref_summary_online_lyrics_auto_match">When local lyrics are missing, send song metadata to third-party lyrics sources. Online matches may be incorrect.</string>
+    <string name="pref_summary_lyrics_providers">Configure enabled online lyrics providers and search priority.</string>
     <string name="pref_summary_remember_last_tab">Go to the last opened tab on launch</string>
     <string name="pref_summary_remember_shuffle">Shuffle mode will stay on when selecting a new list of songs</string>
     <string name="could_not_download_album_cover">"Couldn\u2019t download a matching album cover."</string>
@@ -342,6 +348,7 @@
     <string name="library_categories">Library categories</string>
     <string name="pref_summary_library_categories">Configure visibility and order of library categories.</string>
     <string name="you_have_to_select_at_least_one_category">You have to select at least one category.</string>
+    <string name="you_have_to_enable_at_least_one_lyrics_provider">You have to enable at least one lyrics provider.</string>
     <string name="action_scan_directory">Scan directory</string>
     <string name="scan_media">Scan media</string>
     <string name="action_sort_order">Sort order</string>

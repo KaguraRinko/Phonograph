@@ -34,6 +34,8 @@ import com.kabouzeid.gramophone.preferences.BlacklistPreference;
 import com.kabouzeid.gramophone.preferences.BlacklistPreferenceDialog;
 import com.kabouzeid.gramophone.preferences.LibraryPreference;
 import com.kabouzeid.gramophone.preferences.LibraryPreferenceDialog;
+import com.kabouzeid.gramophone.preferences.LyricsProviderPreference;
+import com.kabouzeid.gramophone.preferences.LyricsProviderPreferenceDialog;
 import com.kabouzeid.gramophone.ui.activities.base.AbsBaseActivity;
 import com.kabouzeid.gramophone.util.NavigationUtil;
 import com.kabouzeid.gramophone.util.PreferenceUtil;
@@ -142,6 +144,8 @@ public class SettingsActivity extends AbsBaseActivity implements ColorChooserDia
                 return BlacklistPreferenceDialog.newInstance();
             } else if (preference instanceof LibraryPreference) {
                 return LibraryPreferenceDialog.newInstance();
+            } else if (preference instanceof LyricsProviderPreference) {
+                return LyricsProviderPreferenceDialog.newInstance();
             }
             return super.onCreatePreferenceDialog(preference);
         }

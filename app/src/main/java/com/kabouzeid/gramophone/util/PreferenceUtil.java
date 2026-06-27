@@ -15,7 +15,9 @@ import com.google.gson.reflect.TypeToken;
 
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.helper.SortOrder;
+import com.kabouzeid.gramophone.lyrics.LyricsProviderRegistry;
 import com.kabouzeid.gramophone.model.CategoryInfo;
+import com.kabouzeid.gramophone.model.LyricsProviderInfo;
 import com.kabouzeid.gramophone.ui.fragments.mainactivity.folders.FoldersFragment;
 import com.kabouzeid.gramophone.ui.fragments.player.NowPlayingScreen;
 
@@ -83,6 +85,7 @@ public final class PreferenceUtil {
 
     public static final String SYNCHRONIZED_LYRICS_SHOW = "synchronized_lyrics_show";
     public static final String ONLINE_LYRICS_AUTO_MATCH = "online_lyrics_auto_match";
+    public static final String LYRICS_PROVIDERS = "lyrics_providers";
 
     public static final String INITIALIZED_BLACKLIST = "initialized_blacklist";
 
@@ -510,6 +513,38 @@ public final class PreferenceUtil {
 
     public final boolean onlineLyricsAutoMatch() {
         return mPreferences.getBoolean(ONLINE_LYRICS_AUTO_MATCH, true);
+    }
+
+    public void setLyricsProviderInfos(List<LyricsProviderInfo> providers) {
+        Gson gson = new Gson();
+        Type collectionType = new TypeToken<List<LyricsProviderInfo>>() {
+        }.getType();
+
+        final SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString(LYRICS_PROVIDERS, gson.toJson(
+                LyricsProviderRegistry.normalize(providers), collectionType));
+        editor.apply();
+    }
+
+    public List<LyricsProviderInfo> getLyricsProviderInfos() {
+        String data = mPreferences.getString(LYRICS_PROVIDERS, null);
+        if (data != null) {
+            Gson gson = new Gson();
+            Type collectionType = new TypeToken<List<LyricsProviderInfo>>() {
+            }.getType();
+
+            try {
+                return LyricsProviderRegistry.normalize(gson.fromJson(data, collectionType));
+            } catch (JsonSyntaxException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return getDefaultLyricsProviderInfos();
+    }
+
+    public List<LyricsProviderInfo> getDefaultLyricsProviderInfos() {
+        return LyricsProviderRegistry.getDefaultProviderInfos();
     }
 
     public void setInitializedBlacklist() {

@@ -151,7 +151,11 @@ public class LyricsSearchDialog extends DialogFragment {
             protected List<LyricsSearchResult> doInBackground(String... params) {
                 LyricsSearchQuery query = LyricsSearchQuery.fromSong(song)
                         .withKeyword(params.length > 0 ? params[0] : null);
-                return LyricsRepository.createDefault().search(query);
+                Context context = getContext();
+                if (context == null) {
+                    return new ArrayList<>();
+                }
+                return LyricsRepository.createConfigured(context.getApplicationContext()).search(query);
             }
 
             @Override
