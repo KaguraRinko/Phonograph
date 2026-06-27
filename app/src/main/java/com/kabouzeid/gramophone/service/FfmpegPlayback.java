@@ -25,6 +25,7 @@ import com.kabouzeid.gramophone.service.playback.Playback;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 @UnstableApi
@@ -45,6 +46,7 @@ public class FfmpegPlayback implements Playback {
     private volatile long cachedBufferedPosition = C.TIME_UNSET;
     private volatile long cachedPositionUpdateTime;
     private volatile int cachedAudioSessionId = C.AUDIO_SESSION_ID_UNSET;
+    private final AtomicInteger seekVersion = new AtomicInteger();
 
     public FfmpegPlayback(@NonNull Context context) {
         this.context = context.getApplicationContext();
@@ -203,16 +205,39 @@ public class FfmpegPlayback implements Playback {
 
     @Override
     public int seek(int whereto) {
-        Boolean seeked = callOnPlayerThread(() -> {
-            if (player == null) {
-                return false;
+        if (player == null) {
+            return -1;
+        }
+        int safePosition = Math.max(0, whereto);
+        cachedPosition = safePosition;
+        cachedPositionUpdateTime = SystemClock.elapsedRealtime();
+        int version = seekVersion.incrementAndGet();
+
+        if (Looper.myLooper() == playerThread.getLooper()) {
+            try {
+                player.seekTo(safePosition);
+                cachedPosition = safePosition;
+                cachedPositionUpdateTime = SystemClock.elapsedRealtime();
+                notifyPlaybackStateChanged();
+                return safePosition;
+            } catch (RuntimeException e) {
+                return -1;
             }
-            player.seekTo(whereto);
-            cachedPosition = whereto;
-            cachedPositionUpdateTime = SystemClock.elapsedRealtime();
-            return true;
-        }, false);
-        return seeked != null && seeked ? whereto : -1;
+        }
+
+        boolean posted = playerHandler.post(() -> {
+            if (player == null || version != seekVersion.get()) {
+                return;
+            }
+            try {
+                player.seekTo(safePosition);
+                cachedPosition = safePosition;
+                cachedPositionUpdateTime = SystemClock.elapsedRealtime();
+                notifyPlaybackStateChanged();
+            } catch (RuntimeException ignored) {
+            }
+        });
+        return posted ? safePosition : -1;
     }
 
     @Override
