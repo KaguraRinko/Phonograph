@@ -9,6 +9,11 @@ public abstract class AbsSynchronizedLyrics extends Lyrics {
     protected int offset = 0;
 
     public String getLine(int time) {
+        parse(false);
+        if (lines.size() == 0) {
+            return "";
+        }
+
         time += offset + AbsSynchronizedLyrics.TIME_OFFSET_MS;
 
         int lastLineTime = lines.keyAt(0);
@@ -24,6 +29,22 @@ public abstract class AbsSynchronizedLyrics extends Lyrics {
         }
 
         return lines.get(lastLineTime);
+    }
+
+    public int getNextLineStartTime(int time) {
+        parse(false);
+        if (lines.size() == 0) {
+            return -1;
+        }
+
+        int adjustedTime = time + offset + AbsSynchronizedLyrics.TIME_OFFSET_MS;
+        for (int i = 0; i < lines.size(); i++) {
+            int lineTime = lines.keyAt(i);
+            if (lineTime > adjustedTime) {
+                return Math.max(0, lineTime - offset - AbsSynchronizedLyrics.TIME_OFFSET_MS);
+            }
+        }
+        return -1;
     }
 
     public boolean isSynchronized() {
