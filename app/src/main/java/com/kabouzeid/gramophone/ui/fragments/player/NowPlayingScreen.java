@@ -6,7 +6,6 @@ import androidx.annotation.StringRes;
 import com.kabouzeid.gramophone.R;
 
 public enum NowPlayingScreen {
-    CARD(R.string.card, R.drawable.np_card, 0),
     FLAT(R.string.flat, R.drawable.np_flat, 1);
 
     @StringRes

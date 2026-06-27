@@ -180,17 +180,13 @@ public final class PreferenceUtil {
     }
 
     public final NowPlayingScreen getNowPlayingScreen() {
-        int id = mPreferences.getInt(NOW_PLAYING_SCREEN_ID, 0);
-        for (NowPlayingScreen nowPlayingScreen : NowPlayingScreen.values()) {
-            if (nowPlayingScreen.id == id) return nowPlayingScreen;
-        }
-        return NowPlayingScreen.CARD;
+        return NowPlayingScreen.FLAT;
     }
 
     @SuppressLint("CommitPrefEdits")
     public void setNowPlayingScreen(NowPlayingScreen nowPlayingScreen) {
         final SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putInt(NOW_PLAYING_SCREEN_ID, nowPlayingScreen.id);
+        editor.putInt(NOW_PLAYING_SCREEN_ID, NowPlayingScreen.FLAT.id);
         editor.commit();
     }
 

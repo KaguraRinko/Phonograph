@@ -34,8 +34,6 @@ import com.kabouzeid.gramophone.preferences.BlacklistPreference;
 import com.kabouzeid.gramophone.preferences.BlacklistPreferenceDialog;
 import com.kabouzeid.gramophone.preferences.LibraryPreference;
 import com.kabouzeid.gramophone.preferences.LibraryPreferenceDialog;
-import com.kabouzeid.gramophone.preferences.NowPlayingScreenPreference;
-import com.kabouzeid.gramophone.preferences.NowPlayingScreenPreferenceDialog;
 import com.kabouzeid.gramophone.ui.activities.base.AbsBaseActivity;
 import com.kabouzeid.gramophone.util.NavigationUtil;
 import com.kabouzeid.gramophone.util.PreferenceUtil;
@@ -140,9 +138,7 @@ public class SettingsActivity extends AbsBaseActivity implements ColorChooserDia
         @Nullable
         @Override
         public DialogFragment onCreatePreferenceDialog(Preference preference) {
-            if (preference instanceof NowPlayingScreenPreference) {
-                return NowPlayingScreenPreferenceDialog.newInstance();
-            } else if (preference instanceof BlacklistPreference) {
+            if (preference instanceof BlacklistPreference) {
                 return BlacklistPreferenceDialog.newInstance();
             } else if (preference instanceof LibraryPreference) {
                 return LibraryPreferenceDialog.newInstance();
@@ -324,8 +320,6 @@ public class SettingsActivity extends AbsBaseActivity implements ColorChooserDia
                 setSummary(subsonicTranscodingBitrate, newValue);
                 return true;
             });
-
-            updateNowPlayingScreenSummary();
         }
 
         private void setSubsonicTranscodingOptionsEnabled(boolean enabled) {
@@ -343,9 +337,6 @@ public class SettingsActivity extends AbsBaseActivity implements ColorChooserDia
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             switch (key) {
-                case PreferenceUtil.NOW_PLAYING_SCREEN_ID:
-                    updateNowPlayingScreenSummary();
-                    break;
                 case PreferenceUtil.CLASSIC_NOTIFICATION:
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         findPreference("colored_notification").setEnabled(sharedPreferences.getBoolean(key, false));
@@ -354,8 +345,5 @@ public class SettingsActivity extends AbsBaseActivity implements ColorChooserDia
             }
         }
 
-        private void updateNowPlayingScreenSummary() {
-            findPreference("now_playing_screen_id").setSummary(PreferenceUtil.getInstance(getActivity()).getNowPlayingScreen().titleRes);
-        }
     }
 }

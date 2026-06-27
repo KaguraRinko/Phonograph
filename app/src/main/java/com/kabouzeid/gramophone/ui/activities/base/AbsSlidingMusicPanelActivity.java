@@ -12,7 +12,6 @@ import androidx.annotation.LayoutRes;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.fragment.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -22,10 +21,7 @@ import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
 import com.kabouzeid.gramophone.ui.fragments.player.AbsPlayerFragment;
 import com.kabouzeid.gramophone.ui.fragments.player.MiniPlayerFragment;
-import com.kabouzeid.gramophone.ui.fragments.player.NowPlayingScreen;
-import com.kabouzeid.gramophone.ui.fragments.player.card.CardPlayerFragment;
 import com.kabouzeid.gramophone.ui.fragments.player.flat.FlatPlayerFragment;
-import com.kabouzeid.gramophone.util.PreferenceUtil;
 import com.kabouzeid.gramophone.util.ViewUtil;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
@@ -36,7 +32,7 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
  *         Do not use {@link #setContentView(int)}. Instead wrap your layout with
  *         {@link #wrapSlidingMusicPanel(int)} first and then return it in {@link #createContentView()}
  */
-public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivity implements SlidingUpPanelLayout.PanelSlideListener, CardPlayerFragment.Callbacks {
+public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivity implements SlidingUpPanelLayout.PanelSlideListener, AbsPlayerFragment.Callbacks {
 
     SlidingUpPanelLayout slidingUpPanelLayout;
 
@@ -44,7 +40,6 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
     private int taskColor;
     private boolean lightStatusbar;
 
-    private NowPlayingScreen currentNowPlayingScreen;
     private AbsPlayerFragment playerFragment;
     private MiniPlayerFragment miniPlayerFragment;
     private int miniPlayerNavigationInset;
@@ -58,18 +53,9 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
         setContentView(createContentView());
         slidingUpPanelLayout = findViewById(R.id.sliding_layout);
 
-        currentNowPlayingScreen = PreferenceUtil.getInstance(this).getNowPlayingScreen();
-        Fragment fragment; // must implement AbsPlayerFragment
-        switch (currentNowPlayingScreen) {
-            case FLAT:
-                fragment = new FlatPlayerFragment();
-                break;
-            case CARD:
-            default:
-                fragment = new CardPlayerFragment();
-                break;
-        }
-        getSupportFragmentManager().beginTransaction().replace(R.id.player_fragment_container, fragment).commit();
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.player_fragment_container, new FlatPlayerFragment())
+                .commit();
         getSupportFragmentManager().executePendingTransactions();
 
         playerFragment = (AbsPlayerFragment) getSupportFragmentManager().findFragmentById(R.id.player_fragment_container);
@@ -110,14 +96,6 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
                 }
             }
         });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (currentNowPlayingScreen != PreferenceUtil.getInstance(this).getNowPlayingScreen()) {
-            postRecreate();
-        }
     }
 
     public void setAntiDragView(View antiDragView) {
