@@ -326,6 +326,32 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
     }
 
     @NonNull
+    public synchronized List<String> getDistinctCoverArtIds(long serverId) {
+        List<String> coverArtIds = new ArrayList<>();
+        Cursor cursor = getReadableDatabase().query(
+                true,
+                TABLE_SONGS,
+                new String[]{COLUMN_COVER_ART},
+                COLUMN_SERVER_ID + "=? AND " + COLUMN_COVER_ART + " IS NOT NULL AND TRIM(" + COLUMN_COVER_ART + ")<>''",
+                new String[]{String.valueOf(serverId)},
+                null,
+                null,
+                COLUMN_COVER_ART + " COLLATE NOCASE",
+                null
+        );
+        try {
+            if (cursor.moveToFirst()) {
+                do {
+                    coverArtIds.add(cursor.getString(0));
+                } while (cursor.moveToNext());
+            }
+        } finally {
+            cursor.close();
+        }
+        return coverArtIds;
+    }
+
+    @NonNull
     private List<Song> getSongs(long serverId, @Nullable String selection,
                                 @Nullable String[] selectionArgs, @Nullable String orderBy) {
         List<Song> songs = new ArrayList<>();
