@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
+import com.kabouzeid.gramophone.lyrics.LocalLyricsLoader;
 import com.kabouzeid.gramophone.loader.PlaylistLoader;
 import com.kabouzeid.gramophone.loader.SongLoader;
 import com.kabouzeid.gramophone.model.Album;
@@ -332,53 +333,6 @@ public class MusicUtil {
 
     @Nullable
     public static String getLyrics(Song song) {
-        String lyrics = null;
-
-        File file = new File(song.data);
-
-        try {
-            lyrics = AudioFileIO.read(file).getTagOrCreateDefault().getFirst(FieldKey.LYRICS);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        if (lyrics == null || lyrics.trim().isEmpty() || !AbsSynchronizedLyrics.isSynchronized(lyrics)) {
-            File dir = file.getAbsoluteFile().getParentFile();
-
-            if (dir != null && dir.exists() && dir.isDirectory()) {
-                String format = ".*%s.*\\.(lrc|txt)";
-                String filename = Pattern.quote(FileUtil.stripExtension(file.getName()));
-                String songtitle = Pattern.quote(song.title);
-
-                final List<Pattern> patterns = new ArrayList<>();
-                patterns.add(Pattern.compile(String.format(format, filename), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE));
-                patterns.add(Pattern.compile(String.format(format, songtitle), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE));
-
-                File[] files = dir.listFiles(f -> {
-                    for (Pattern pattern : patterns) {
-                        if (pattern.matcher(f.getName()).matches()) return true;
-                    }
-                    return false;
-                });
-
-                if (files != null && files.length > 0) {
-                    for (File f : files) {
-                        try {
-                            String newLyrics = FileUtil.read(f);
-                            if (newLyrics != null && !newLyrics.trim().isEmpty()) {
-                                if (AbsSynchronizedLyrics.isSynchronized(newLyrics)) {
-                                    return newLyrics;
-                                }
-                                lyrics = newLyrics;
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }
-
-        return lyrics;
+        return LocalLyricsLoader.load(song);
     }
 }

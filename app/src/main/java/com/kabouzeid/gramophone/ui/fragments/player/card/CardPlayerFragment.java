@@ -3,6 +3,7 @@ package com.kabouzeid.gramophone.ui.fragments.player.card;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -44,6 +45,7 @@ import com.kabouzeid.gramophone.dialogs.LyricsDialog;
 import com.kabouzeid.gramophone.dialogs.SongShareDialog;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
 import com.kabouzeid.gramophone.helper.menu.SongMenuHelper;
+import com.kabouzeid.gramophone.lyrics.LyricsRepository;
 import com.kabouzeid.gramophone.model.Song;
 import com.kabouzeid.gramophone.model.lyrics.Lyrics;
 import com.kabouzeid.gramophone.ui.activities.base.AbsSlidingMusicPanelActivity;
@@ -308,12 +310,6 @@ public class CardPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
     private void updateLyrics() {
         if (updateLyricsAsyncTask != null) updateLyricsAsyncTask.cancel(false);
         final Song song = MusicPlayerRemote.getCurrentSong();
-        if (SongMenuHelper.isRemoteSong(song)) {
-            lyrics = null;
-            playerAlbumCoverFragment.setLyrics(null);
-            toolbar.getMenu().removeItem(R.id.action_show_lyrics);
-            return;
-        }
         updateLyricsAsyncTask = new AsyncTask<Void, Void, Lyrics>() {
             @Override
             protected void onPreExecute() {
@@ -325,7 +321,12 @@ public class CardPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
 
             @Override
             protected Lyrics doInBackground(Void... params) {
-                String data = MusicUtil.getLyrics(song);
+                Context context = getContext();
+                if (context == null) {
+                    return null;
+                }
+                String data = LyricsRepository.createDefault()
+                        .getLyrics(context.getApplicationContext(), song, true);
                 if (TextUtils.isEmpty(data)) {
                     return null;
                 }
