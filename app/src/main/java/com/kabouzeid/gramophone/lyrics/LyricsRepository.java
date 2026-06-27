@@ -5,6 +5,10 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.kabouzeid.gramophone.lyrics.providers.KugouLyricsProvider;
+import com.kabouzeid.gramophone.lyrics.providers.LrclibLyricsProvider;
+import com.kabouzeid.gramophone.lyrics.providers.NeteaseLyricsProvider;
+import com.kabouzeid.gramophone.lyrics.providers.QqMusicLyricsProvider;
 import com.kabouzeid.gramophone.model.Song;
 
 import java.io.IOException;
@@ -23,6 +27,16 @@ public class LyricsRepository {
     @NonNull
     public static LyricsRepository empty() {
         return new LyricsRepository(Collections.emptyList());
+    }
+
+    @NonNull
+    public static LyricsRepository createDefault() {
+        List<LyricsProvider> providers = new ArrayList<>();
+        providers.add(new LrclibLyricsProvider());
+        providers.add(new NeteaseLyricsProvider());
+        providers.add(new KugouLyricsProvider());
+        providers.add(new QqMusicLyricsProvider());
+        return new LyricsRepository(providers);
     }
 
     @Nullable
