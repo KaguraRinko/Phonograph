@@ -33,13 +33,13 @@ public class PlayingNotificationImpl24 extends PlayingNotification {
 
     @Override
     public synchronized void update() {
-        stopped = false;
+        final int updateVersion = beginUpdate();
 
         final Song song = service.getCurrentSong();
 
-        final boolean isPlaying = service.isPlaying();
+        final boolean playbackActive = service.isPlaybackActive();
 
-        final int playButtonResId = isPlaying ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp;
+        final int playButtonResId = playbackActive ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp;
 
         Intent action = new Intent(service, MainActivity.class);
         action.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -86,7 +86,7 @@ public class PlayingNotificationImpl24 extends PlayingNotification {
                                 .setDeleteIntent(deleteIntent)
                                 .setContentTitle(song.title)
                                 .setContentText(song.artistName)
-                                .setOngoing(isPlaying)
+                                .setOngoing(playbackActive)
                                 .setShowWhen(false)
                                 .addAction(previousAction)
                                 .addAction(playPauseAction)
@@ -99,7 +99,7 @@ public class PlayingNotificationImpl24 extends PlayingNotification {
                                 builder.setColor(color);
                         }
 
-                        if (stopped)
+                        if (!isCurrentUpdate(updateVersion))
                             return; // notification has been stopped before loading was finished
                         updateNotifyModeAndPostNotification(builder.build());
                     }

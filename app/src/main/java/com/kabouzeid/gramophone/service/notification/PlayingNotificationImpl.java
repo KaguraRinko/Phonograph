@@ -37,11 +37,11 @@ public class PlayingNotificationImpl extends PlayingNotification {
 
     @Override
     public synchronized void update() {
-        stopped = false;
+        final int updateVersion = beginUpdate();
 
         final Song song = service.getCurrentSong();
 
-        final boolean isPlaying = service.isPlaying();
+        final boolean playbackActive = service.isPlaybackActive();
         final boolean isBuffering = service.isBuffering();
 
         final RemoteViews notificationLayout = new RemoteViews(service.getPackageName(), R.layout.notification);
@@ -80,7 +80,7 @@ public class PlayingNotificationImpl extends PlayingNotification {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setContent(notificationLayout)
                 .setCustomBigContentView(notificationLayoutBig)
-                .setOngoing(isPlaying || isBuffering)
+                .setOngoing(playbackActive || isBuffering)
                 .build();
 
         final int bigNotificationImageSize = service.getResources().getDimensionPixelSize(R.dimen.notification_big_image_size);
@@ -120,7 +120,7 @@ public class PlayingNotificationImpl extends PlayingNotification {
                                 setBackgroundColor(bgColor);
                                 setNotificationContent(ColorUtil.isColorLight(bgColor));
 
-                                if (stopped)
+                                if (!isCurrentUpdate(updateVersion))
                                     return; // notification has been stopped before loading was finished
                                 updateNotifyModeAndPostNotification(notification);
                             }
@@ -137,7 +137,7 @@ public class PlayingNotificationImpl extends PlayingNotification {
                                 Bitmap prev = ImageUtil.createBitmap(ImageUtil.getTintedVectorDrawable(service, R.drawable.ic_skip_previous_white_24dp, primary), 1.5f);
                                 Bitmap next = ImageUtil.createBitmap(ImageUtil.getTintedVectorDrawable(service, R.drawable.ic_skip_next_white_24dp, primary), 1.5f);
                                 Bitmap playPause = ImageUtil.createBitmap(ImageUtil.getTintedVectorDrawable(service,
-                                        isPlaying ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp,
+                                        playbackActive ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp,
                                         primary), 1.5f);
 
                                 notificationLayout.setTextColor(R.id.title, primary);

@@ -185,6 +185,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     private ContentObserver mediaStoreObserver;
     private boolean notHandledMetaChangedForCurrentTrack;
     private boolean buffering;
+    private boolean playRequested;
     private int bufferedProgressPercent = 100;
 
     private Handler uiThreadHandler;
@@ -339,7 +340,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
                 String action = intent.getAction();
                 switch (action) {
                     case ACTION_TOGGLE_PAUSE:
-                        if (isPlaying()) {
+                        if (isPlaybackActive()) {
                             pause();
                         } else {
                             play();
@@ -552,6 +553,10 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         return playback != null && playback.isPlaying();
     }
 
+    public boolean isPlaybackActive() {
+        return isPlaying() || (playRequested && buffering);
+    }
+
     public boolean isBuffering() {
         return buffering;
     }
@@ -761,12 +766,12 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     }
 
     private void updateMediaSessionPlaybackState() {
+        int state = buffering && playRequested ? PlaybackStateCompat.STATE_BUFFERING
+                : isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
         mediaSession.setPlaybackState(
                 new PlaybackStateCompat.Builder()
                         .setActions(MEDIA_SESSION_ACTIONS)
-                        .setState(isBuffering() ? PlaybackStateCompat.STATE_BUFFERING
-                                        : isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED,
-                                getSongProgressMillis(), 1)
+                        .setState(state, getSongProgressMillis(), isPlaybackActive() ? 1 : 0)
                         .build());
     }
 
@@ -1040,8 +1045,16 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
 
     public void pause() {
         pausedByTransientLossOfFocus = false;
-        if (playback.isPlaying()) {
+        boolean wasPlaybackActive = isPlaybackActive();
+        boolean wasBuffering = buffering;
+        playRequested = false;
+        if (playback.isPlaying() || wasBuffering) {
             playback.pause();
+        }
+        if (wasBuffering) {
+            setBuffering(false);
+        }
+        if (wasPlaybackActive) {
             notifyChange(PLAY_STATE_CHANGED);
         }
     }
@@ -1049,6 +1062,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     public void play() {
         synchronized (this) {
             if (requestFocus()) {
+                playRequested = true;
                 if (!playback.isPlaying()) {
                     if (!playback.isInitialized()) {
                         playSongAt(getPosition());
@@ -1425,6 +1439,8 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
             return true;
         }
         playbackAttempt = PlaybackAttempt.FAILED;
+        playRequested = false;
+        notifyChange(PLAY_STATE_CHANGED);
         return false;
     }
 

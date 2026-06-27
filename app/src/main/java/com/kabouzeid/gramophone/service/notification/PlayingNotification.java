@@ -20,6 +20,7 @@ public abstract class PlayingNotification {
     private static final int NOTIFY_MODE_BACKGROUND = 0;
 
     private int notifyMode = NOTIFY_MODE_BACKGROUND;
+    private int updateVersion;
 
     private NotificationManager notificationManager;
     protected MusicService service;
@@ -35,8 +36,18 @@ public abstract class PlayingNotification {
 
     public abstract void update();
 
+    synchronized int beginUpdate() {
+        stopped = false;
+        return ++updateVersion;
+    }
+
+    synchronized boolean isCurrentUpdate(int version) {
+        return !stopped && version == updateVersion;
+    }
+
     public synchronized void stop() {
         stopped = true;
+        updateVersion++;
         service.stopForeground(true);
         notificationManager.cancel(NOTIFICATION_ID);
     }
