@@ -101,9 +101,9 @@ public class SongGlideRequest {
     }
 
     private static Object getLoadModel(@Nullable Context context, Song song, boolean ignoreMediaStore) {
-        String remoteCoverArtUri = getRemoteCoverArtUri(context, song);
-        if (remoteCoverArtUri != null) {
-            return remoteCoverArtUri;
+        Object remoteCoverArt = getRemoteCoverArt(context, song);
+        if (remoteCoverArt != null) {
+            return remoteCoverArt;
         }
         if (ignoreMediaStore) {
             return new AudioFileCover(song.data);
@@ -113,7 +113,7 @@ public class SongGlideRequest {
     }
 
     @Nullable
-    private static String getRemoteCoverArtUri(@Nullable Context context, @Nullable Song song) {
+    private static Object getRemoteCoverArt(@Nullable Context context, @Nullable Song song) {
         if (context == null || song == null || !SubsonicUri.isSubsonicUri(song.data)) {
             return null;
         }
@@ -122,7 +122,7 @@ public class SongGlideRequest {
         if (serverId == SubsonicServer.NO_ID || MediaSourceManager.getSource(context, sourceId) == null) {
             return null;
         }
-        return MediaSourceManager.getRepository(context, sourceId).resolveCoverArtUri(context, song);
+        return MediaSourceManager.getRepository(context, sourceId).resolveCoverArt(context, song);
     }
 
     private static <T> RequestBuilder<T> createBaseRequest(RequestBuilder<T> requestBuilder, Song song) {

@@ -132,8 +132,8 @@ public class LocalMusicRepository implements MusicRepository {
 
     @Nullable
     @Override
-    public String resolveCoverArtUri(@NonNull Context context, @NonNull Song song) {
-        return MusicUtil.getMediaStoreAlbumCoverUri(song.albumId).toString();
+    public Object resolveCoverArt(@NonNull Context context, @NonNull Song song) {
+        return MusicUtil.getMediaStoreAlbumCoverUri(song.albumId);
     }
 
     @Override

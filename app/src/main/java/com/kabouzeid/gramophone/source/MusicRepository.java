@@ -60,7 +60,7 @@ public interface MusicRepository {
     String resolveSongUri(@NonNull Context context, @NonNull Song song);
 
     @Nullable
-    String resolveCoverArtUri(@NonNull Context context, @NonNull Song song);
+    Object resolveCoverArt(@NonNull Context context, @NonNull Song song);
 
     boolean supportsLocalFileActions();
 }

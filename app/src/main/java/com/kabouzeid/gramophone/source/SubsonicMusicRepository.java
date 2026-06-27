@@ -12,6 +12,7 @@ import com.kabouzeid.gramophone.model.Artist;
 import com.kabouzeid.gramophone.model.Genre;
 import com.kabouzeid.gramophone.model.Playlist;
 import com.kabouzeid.gramophone.model.Song;
+import com.kabouzeid.gramophone.glide.subsonic.SubsonicCoverArt;
 import com.kabouzeid.gramophone.subsonic.SubsonicLibraryStore;
 import com.kabouzeid.gramophone.subsonic.SubsonicServer;
 import com.kabouzeid.gramophone.subsonic.SubsonicUri;
@@ -138,11 +139,11 @@ public class SubsonicMusicRepository implements MusicRepository {
 
     @Nullable
     @Override
-    public String resolveCoverArtUri(@NonNull Context context, @NonNull Song song) {
+    public Object resolveCoverArt(@NonNull Context context, @NonNull Song song) {
         String coverArt = SubsonicLibraryStore.getInstance(context).getCoverArt(server.id, song.id);
         return coverArt == null || coverArt.trim().isEmpty()
                 ? null
-                : new SubsonicRestClient(context, server).buildCoverArtUrl(coverArt);
+                : new SubsonicCoverArt(server, coverArt);
     }
 
     @Override
