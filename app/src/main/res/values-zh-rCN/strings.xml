@@ -131,6 +131,7 @@
     <string name="pref_header_notification">通知</string>
     <string name="pref_title_navigation_bar">着色导航栏</string>
     <string name="pref_title_app_shortcuts">着色应用快捷方式</string>
+    <string name="pref_title_online_lyrics_auto_match">自动匹配网络歌词</string>
     <string name="pref_title_album_art_on_lockscreen">显示专辑封面</string>
     <string name="pref_title_auto_download_metadata">自动下载元数据</string>
     <string name="pref_title_blurred_album_art">专辑封面模糊化</string>
@@ -176,6 +177,7 @@
     <string name="pref_summary_colored_app_shortcuts">用主色调着色应用快捷方式。</string>
     <string name="pref_summary_audio_ducking">通知、导航等。</string>
     <string name="pref_summary_synchronized_lyrics_show">当前仅支持 LRC 格式同步歌词。内嵌或外置均可。</string>
+    <string name="pref_summary_online_lyrics_auto_match">本地没有歌词时，会向第三方歌词源发送歌曲元数据。网络匹配结果可能不完全正确。</string>
     <string name="pref_summary_remember_last_tab">启动时跳转到最后打开页面</string>
     <string name="pref_summary_remember_shuffle">随机播放模式将在您选择新的播放列表时保持开启</string>
     <string name="could_not_download_album_cover">"\u65e0\u6cd5\u4e0b\u8f7d\u5230\u5339\u914d\u7684\u4e13\u8f91\u5c01\u9762\u3002"</string>

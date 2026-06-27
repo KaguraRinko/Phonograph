@@ -16,6 +16,13 @@
             android:summary="@string/pref_summary_synchronized_lyrics_show"
             android:title="@string/pref_title_synchronized_lyrics_show" />
 
+        <com.kabouzeid.appthemehelper.common.prefs.supportv7.ATESwitchPreference
+            app:iconSpaceReserved="false"
+            android:defaultValue="true"
+            android:key="online_lyrics_auto_match"
+            android:summary="@string/pref_summary_online_lyrics_auto_match"
+            android:title="@string/pref_title_online_lyrics_auto_match" />
+
     </com.kabouzeid.appthemehelper.common.prefs.supportv7.ATEPreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

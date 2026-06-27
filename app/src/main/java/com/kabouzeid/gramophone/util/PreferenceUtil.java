@@ -82,6 +82,7 @@ public final class PreferenceUtil {
     public static final String START_DIRECTORY = "start_directory";
 
     public static final String SYNCHRONIZED_LYRICS_SHOW = "synchronized_lyrics_show";
+    public static final String ONLINE_LYRICS_AUTO_MATCH = "online_lyrics_auto_match";
 
     public static final String INITIALIZED_BLACKLIST = "initialized_blacklist";
 
@@ -509,6 +510,10 @@ public final class PreferenceUtil {
 
     public final boolean synchronizedLyricsShow() {
         return mPreferences.getBoolean(SYNCHRONIZED_LYRICS_SHOW, true);
+    }
+
+    public final boolean onlineLyricsAutoMatch() {
+        return mPreferences.getBoolean(ONLINE_LYRICS_AUTO_MATCH, true);
     }
 
     public void setInitializedBlacklist() {

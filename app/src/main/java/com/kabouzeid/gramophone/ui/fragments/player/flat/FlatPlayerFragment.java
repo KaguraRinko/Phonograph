@@ -51,6 +51,7 @@ import com.kabouzeid.gramophone.ui.fragments.player.AbsPlayerFragment;
 import com.kabouzeid.gramophone.ui.fragments.player.PlayerAlbumCoverFragment;
 import com.kabouzeid.gramophone.util.ImageUtil;
 import com.kabouzeid.gramophone.util.MusicUtil;
+import com.kabouzeid.gramophone.util.PreferenceUtil;
 import com.kabouzeid.gramophone.util.Util;
 import com.kabouzeid.gramophone.util.ViewUtil;
 import com.kabouzeid.gramophone.views.WidthFitSquareLayout;
@@ -338,8 +339,9 @@ public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
                 if (context == null) {
                     return null;
                 }
+                boolean allowOnline = PreferenceUtil.getInstance(context).onlineLyricsAutoMatch();
                 String data = LyricsRepository.createDefault()
-                        .getLyrics(context.getApplicationContext(), song, true);
+                        .getLyrics(context.getApplicationContext(), song, allowOnline);
                 if (TextUtils.isEmpty(data)) {
                     return null;
                 }
