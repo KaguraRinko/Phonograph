@@ -56,6 +56,11 @@ public class FfmpegPlayback implements Playback {
                 }
 
                 @Override
+                public void onIsPlayingChanged(boolean isPlaying) {
+                    notifyPlaybackStateChanged();
+                }
+
+                @Override
                 public void onPlayerError(@NonNull PlaybackException error) {
                     handlePlayerError();
                 }
@@ -233,6 +238,13 @@ public class FfmpegPlayback implements Playback {
             callbacks.onBufferingEnded();
         } else if (playbackState == Player.STATE_ENDED) {
             callbacks.onTrackEnded();
+        }
+        notifyPlaybackStateChanged();
+    }
+
+    private void notifyPlaybackStateChanged() {
+        if (callbacks != null) {
+            callbacks.onPlaybackStateChanged();
         }
     }
 

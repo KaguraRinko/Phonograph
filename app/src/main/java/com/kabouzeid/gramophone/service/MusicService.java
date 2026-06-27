@@ -554,7 +554,11 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     }
 
     public boolean isPlaybackActive() {
-        return isPlaying() || (playRequested && buffering);
+        return isPlaying()
+                || (playRequested
+                        && playbackAttempt != PlaybackAttempt.FAILED
+                        && playback != null
+                        && playback.isInitialized());
     }
 
     public boolean isBuffering() {
@@ -1039,6 +1043,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         if (openTrackAndPrepareNextAt(position)) {
             play();
         } else {
+            playRequested = false;
             Toast.makeText(this, getResources().getString(R.string.unplayable_file), Toast.LENGTH_SHORT).show();
         }
     }
@@ -1455,6 +1460,11 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     }
 
     @Override
+    public void onPlaybackStateChanged() {
+        notifyChange(PLAY_STATE_CHANGED);
+    }
+
+    @Override
     public void onBufferingProgressChanged(int percent) {
         updateBufferedProgressPercent(percent);
     }
@@ -1525,6 +1535,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
                     // if there is a timer finished, don't continue
                     if (service.pendingQuit ||
                             service.getRepeatMode() == REPEAT_MODE_NONE && service.isLastTrack()) {
+                        service.playRequested = false;
                         service.notifyChange(PLAY_STATE_CHANGED);
                         service.seek(0);
                         if (service.pendingQuit) {

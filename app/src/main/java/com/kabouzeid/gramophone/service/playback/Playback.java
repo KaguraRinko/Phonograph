@@ -50,6 +50,8 @@ public interface Playback {
 
         void onBufferingEnded();
 
+        void onPlaybackStateChanged();
+
         void onBufferingProgressChanged(int percent);
     }
 }
