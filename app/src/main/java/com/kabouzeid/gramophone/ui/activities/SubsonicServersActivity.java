@@ -11,6 +11,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -22,6 +23,8 @@ import com.kabouzeid.appthemehelper.ThemeStore;
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.source.MediaSourceManager;
 import com.kabouzeid.gramophone.subsonic.SubsonicException;
+import com.kabouzeid.gramophone.subsonic.SubsonicCoverArtCache;
+import com.kabouzeid.gramophone.subsonic.SubsonicCoverArtPreloader;
 import com.kabouzeid.gramophone.subsonic.SubsonicLibraryStore;
 import com.kabouzeid.gramophone.subsonic.SubsonicServer;
 import com.kabouzeid.gramophone.subsonic.SubsonicServerStore;
@@ -42,6 +45,8 @@ public class SubsonicServersActivity extends AbsBaseActivity {
     private static final int MENU_TEST = 3;
     private static final int MENU_SYNC = 4;
     private static final int MENU_DELETE = 5;
+    private static final int MENU_CACHE_COVER_ART = 6;
+    private static final int MENU_CLEAR_COVER_ART_CACHE = 7;
 
     private Toolbar toolbar;
     private RecyclerView recyclerView;
@@ -132,10 +137,14 @@ public class SubsonicServersActivity extends AbsBaseActivity {
             if (editedServer.baseUrl.startsWith("http://")) {
                 Toast.makeText(this, R.string.http_server_warning, Toast.LENGTH_LONG).show();
             }
+            boolean clearCoverArtCache = shouldClearCoverArtCache(server, editedServer);
             if (editedServer.id == SubsonicServer.NO_ID) {
                 SubsonicServerStore.getInstance(this).insertServer(editedServer);
             } else {
                 SubsonicServerStore.getInstance(this).updateServer(editedServer);
+                if (clearCoverArtCache) {
+                    clearCoverArtCache(editedServer, false);
+                }
             }
             reloadServers();
             dialog.dismiss();
@@ -165,6 +174,13 @@ public class SubsonicServersActivity extends AbsBaseActivity {
         return new SubsonicServer(id, displayName, baseUrl, user, pass, lastSynced);
     }
 
+    private boolean shouldClearCoverArtCache(@Nullable SubsonicServer original,
+                                             @NonNull SubsonicServer editedServer) {
+        return original != null
+                && (!original.baseUrl.equals(editedServer.baseUrl)
+                || !original.username.equals(editedServer.username));
+    }
+
     private void testServer(@NonNull SubsonicServer server) {
         Toast.makeText(this, R.string.updating, Toast.LENGTH_SHORT).show();
         new Thread(() -> {
@@ -179,7 +195,7 @@ public class SubsonicServersActivity extends AbsBaseActivity {
 
     private void syncServer(@NonNull SubsonicServer server) {
         if (syncingServerId != SubsonicServer.NO_ID) {
-            Toast.makeText(this, R.string.sync_already_running, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.subsonic_operation_already_running, Toast.LENGTH_SHORT).show();
             return;
         }
         syncingServerId = server.id;
@@ -208,6 +224,47 @@ public class SubsonicServersActivity extends AbsBaseActivity {
         }).start();
     }
 
+    private void cacheCoverArt(@NonNull SubsonicServer server) {
+        if (syncingServerId != SubsonicServer.NO_ID) {
+            Toast.makeText(this, R.string.subsonic_operation_already_running, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        syncingServerId = server.id;
+        showSyncStatus(server, getString(R.string.cover_art_cache_started));
+        adapter.notifyDataSetChanged();
+        Toast.makeText(this, R.string.cover_art_cache_started, Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            SubsonicCoverArtPreloader.Result result = new SubsonicCoverArtPreloader(
+                    SubsonicServersActivity.this,
+                    server,
+                    snapshot -> runOnUiThread(() -> showSyncStatus(server, formatCoverArtCacheProgress(snapshot)))
+            ).preload();
+            runOnUiThread(() -> {
+                syncingServerId = SubsonicServer.NO_ID;
+                adapter.notifyDataSetChanged();
+                String message = formatCoverArtCacheFinished(result);
+                showSyncStatus(server, message);
+                Toast.makeText(SubsonicServersActivity.this, message, Toast.LENGTH_SHORT).show();
+            });
+        }).start();
+    }
+
+    @NonNull
+    private String formatCoverArtCacheProgress(@NonNull SubsonicCoverArtPreloader.Snapshot snapshot) {
+        if (snapshot.total == 0) {
+            return getString(R.string.cover_art_cache_empty);
+        }
+        return getString(R.string.cover_art_cache_progress_x_y, snapshot.progress, snapshot.completed, snapshot.total);
+    }
+
+    @NonNull
+    private String formatCoverArtCacheFinished(@NonNull SubsonicCoverArtPreloader.Result result) {
+        if (result.total == 0) {
+            return getString(R.string.cover_art_cache_empty);
+        }
+        return getString(R.string.cover_art_cache_finished_x_y_z, result.downloaded, result.skipped, result.failed);
+    }
+
     private void showSyncStatus(@NonNull SubsonicServer server, @NonNull String message) {
         syncStatusView.setVisibility(View.VISIBLE);
         syncStatusView.setText(getString(R.string.sync_status_x_y, server.name, message));
@@ -228,6 +285,7 @@ public class SubsonicServersActivity extends AbsBaseActivity {
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(R.string.delete_action, (dialog, which) -> {
                     SubsonicLibraryStore.getInstance(this).clearServerData(server.id);
+                    clearCoverArtCache(server, false);
                     SubsonicServerStore.getInstance(this).deleteServer(server.id);
                     String currentSourceId = MediaSourceManager.getCurrentSourceId(this);
                     if (MediaSourceManager.toSubsonicSourceId(server.id).equals(currentSourceId)) {
@@ -288,14 +346,22 @@ public class SubsonicServersActivity extends AbsBaseActivity {
                 PopupMenu popupMenu = new PopupMenu(SubsonicServersActivity.this, v);
                 popupMenu.getMenu().add(0, MENU_TEST, 0, R.string.test_connection);
                 popupMenu.getMenu().add(0, MENU_SYNC, 1, R.string.sync_library);
-                popupMenu.getMenu().add(0, MENU_EDIT, 2, R.string.action_rename);
-                popupMenu.getMenu().add(0, MENU_DELETE, 3, R.string.action_delete);
+                popupMenu.getMenu().add(0, MENU_CACHE_COVER_ART, 2, R.string.cache_subsonic_cover_art);
+                popupMenu.getMenu().add(0, MENU_CLEAR_COVER_ART_CACHE, 3, R.string.clear_subsonic_cover_art_cache);
+                popupMenu.getMenu().add(0, MENU_EDIT, 4, R.string.action_rename);
+                popupMenu.getMenu().add(0, MENU_DELETE, 5, R.string.action_delete);
                 popupMenu.setOnMenuItemClickListener(item -> {
                     if (item.getItemId() == MENU_TEST) {
                         testServer(server);
                         return true;
                     } else if (item.getItemId() == MENU_SYNC) {
                         syncServer(server);
+                        return true;
+                    } else if (item.getItemId() == MENU_CACHE_COVER_ART) {
+                        cacheCoverArt(server);
+                        return true;
+                    } else if (item.getItemId() == MENU_CLEAR_COVER_ART_CACHE) {
+                        clearCoverArtCache(server, true);
                         return true;
                     } else if (item.getItemId() == MENU_EDIT) {
                         showServerDialog(server);
@@ -308,6 +374,16 @@ public class SubsonicServersActivity extends AbsBaseActivity {
                 });
                 popupMenu.show();
             });
+        }
+    }
+
+    private void clearCoverArtCache(@NonNull SubsonicServer server, boolean showMessage) {
+        SubsonicCoverArtCache.clearServer(this, server.id);
+        Glide.get(this).clearMemory();
+        if (showMessage) {
+            String message = getString(R.string.cover_art_cache_cleared);
+            showSyncStatus(server, message);
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         }
     }
 }
