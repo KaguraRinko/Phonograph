@@ -98,6 +98,15 @@
     <string name="action_save_playing_queue">Save playing queue</string>
     <string name="action_go_to_start_directory">Go to start directory</string>
     <string name="action_show_lyrics">Show lyrics</string>
+    <string name="action_search_lyrics">Search lyrics</string>
+    <string name="lyrics_search_keyword_hint">Song title or artist</string>
+    <string name="lyrics_searching">Searching lyrics…</string>
+    <string name="lyrics_search_no_results">No online lyrics found.</string>
+    <string name="lyrics_search_saved">Lyrics saved.</string>
+    <string name="lyrics_search_save_failed">Couldn\u2019t save lyrics.</string>
+    <string name="lyrics_search_result_synced">Synced</string>
+    <string name="lyrics_search_result_plain">Plain text</string>
+    <string name="lyrics_search_result_format">%1$s / %2$s\n%3$s - %4$s</string>
     <string name="light_theme_name">Light</string>
     <string name="dark_theme_name">Dark</string>
     <string name="black_theme_name">Black (AMOLED)</string>

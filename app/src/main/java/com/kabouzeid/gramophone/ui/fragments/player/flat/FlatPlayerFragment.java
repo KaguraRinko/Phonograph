@@ -39,6 +39,7 @@ import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.adapter.base.MediaEntryViewHolder;
 import com.kabouzeid.gramophone.adapter.song.PlayingQueueAdapter;
 import com.kabouzeid.gramophone.dialogs.LyricsDialog;
+import com.kabouzeid.gramophone.dialogs.LyricsSearchDialog;
 import com.kabouzeid.gramophone.dialogs.SongShareDialog;
 import com.kabouzeid.gramophone.helper.MusicPlayerRemote;
 import com.kabouzeid.gramophone.helper.menu.SongMenuHelper;
@@ -56,7 +57,7 @@ import com.kabouzeid.gramophone.views.WidthFitSquareLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 
-public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbumCoverFragment.Callbacks, SlidingUpPanelLayout.PanelSlideListener {
+public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbumCoverFragment.Callbacks, SlidingUpPanelLayout.PanelSlideListener, LyricsSearchDialog.Callback {
 
 
     View playerStatusBar;
@@ -226,6 +227,7 @@ public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
 
     private void setUpPlayerToolbar() {
         toolbar.inflateMenu(R.menu.menu_player);
+        ensureSearchLyricsMenuItem();
         toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp);
         toolbar.setNavigationOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
         toolbar.setOnMenuItemClickListener(this);
@@ -233,12 +235,27 @@ public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-                if (item.getItemId() == R.id.action_show_lyrics) {
-                if (lyrics != null)
-                    LyricsDialog.create(lyrics).show(getFragmentManager(), "LYRICS");
-                return true;
-                }
+        if (item.getItemId() == R.id.action_search_lyrics) {
+            showLyricsSearchDialog();
+            return true;
+        }
+        if (item.getItemId() == R.id.action_show_lyrics) {
+            if (lyrics != null)
+                LyricsDialog.create(lyrics).show(getFragmentManager(), "LYRICS");
+            return true;
+        }
         return super.onMenuItemClick(item);
+    }
+
+    private void showLyricsSearchDialog() {
+        LyricsSearchDialog dialog = LyricsSearchDialog.create(MusicPlayerRemote.getCurrentSong());
+        dialog.setTargetFragment(this, 0);
+        dialog.show(getFragmentManager(), "LYRICS_SEARCH");
+    }
+
+    @Override
+    public void onLyricsSearchResultSaved() {
+        updateLyrics();
     }
 
     private void setUpRecyclerView() {
@@ -311,6 +328,7 @@ public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
                 super.onPreExecute();
                 lyrics = null;
                 playerAlbumCoverFragment.setLyrics(null);
+                ensureSearchLyricsMenuItem();
                 toolbar.getMenu().removeItem(R.id.action_show_lyrics);
             }
 
@@ -355,6 +373,19 @@ public class FlatPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
                 onPostExecute(null);
             }
         }.execute();
+    }
+
+    private void ensureSearchLyricsMenuItem() {
+        Activity activity = getActivity();
+        if (toolbar == null || activity == null || toolbar.getMenu().findItem(R.id.action_search_lyrics) != null) {
+            return;
+        }
+        int color = ToolbarContentTintHelper.toolbarContentColor(activity, Color.TRANSPARENT);
+        Drawable drawable = ImageUtil.getTintedVectorDrawable(activity, R.drawable.ic_search_white_24dp, color);
+        toolbar.getMenu()
+                .add(Menu.NONE, R.id.action_search_lyrics, Menu.NONE, R.string.action_search_lyrics)
+                .setIcon(drawable)
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
     }
 
     @Override
