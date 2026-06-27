@@ -3,7 +3,10 @@ package com.kabouzeid.gramophone.service;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.Process;
+import android.os.SystemClock;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -29,15 +32,25 @@ public class FfmpegPlayback implements Playback {
     private static final long PLAYER_CALL_TIMEOUT_SECONDS = 5;
 
     private final Context context;
-    private final Handler playerHandler = new Handler(Looper.getMainLooper());
+    private final HandlerThread playerThread;
+    private final Handler playerHandler;
     private final ExoPlayer player;
     @Nullable
     private PlaybackCallbacks callbacks;
-    private boolean isInitialized;
-    private int bufferedPercent = 100;
+    private volatile boolean isInitialized;
+    private volatile boolean cachedIsPlaying;
+    private volatile int bufferedPercent = 100;
+    private volatile long cachedDuration = C.TIME_UNSET;
+    private volatile long cachedPosition = C.TIME_UNSET;
+    private volatile long cachedBufferedPosition = C.TIME_UNSET;
+    private volatile long cachedPositionUpdateTime;
+    private volatile int cachedAudioSessionId = C.AUDIO_SESSION_ID_UNSET;
 
     public FfmpegPlayback(@NonNull Context context) {
         this.context = context.getApplicationContext();
+        playerThread = new HandlerThread("FfmpegPlayback", Process.THREAD_PRIORITY_AUDIO);
+        playerThread.start();
+        playerHandler = new Handler(playerThread.getLooper());
         player = callOnPlayerThread(() -> {
             DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this.context)
                     .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
@@ -57,6 +70,7 @@ public class FfmpegPlayback implements Playback {
 
                 @Override
                 public void onIsPlayingChanged(boolean isPlaying) {
+                    cachePlayerState(exoPlayer);
                     notifyPlaybackStateChanged();
                 }
 
@@ -67,6 +81,7 @@ public class FfmpegPlayback implements Playback {
 
                 @Override
                 public void onEvents(@NonNull Player player, @NonNull Player.Events events) {
+                    cachePlayerState(player);
                     bufferedPercent = Math.max(0, Math.min(100, player.getBufferedPercentage()));
                     if (callbacks != null) {
                         callbacks.onBufferingProgressChanged(bufferedPercent);
@@ -81,6 +96,7 @@ public class FfmpegPlayback implements Playback {
     public boolean setDataSource(@NonNull String path) {
         isInitialized = false;
         bufferedPercent = isRemotePath(path) ? 0 : 100;
+        resetCachedState();
         Boolean prepared = callOnPlayerThread(() -> {
             if (player == null) {
                 return false;
@@ -90,6 +106,7 @@ public class FfmpegPlayback implements Playback {
             player.setMediaItem(MediaItem.fromUri(Uri.parse(path)));
             player.prepare();
             isInitialized = true;
+            cachePlayerState(player);
             return true;
         }, false);
         return prepared != null && prepared;
@@ -118,6 +135,7 @@ public class FfmpegPlayback implements Playback {
                 return false;
             }
             player.play();
+            cachePlayerState(player);
             return true;
         }, false);
         return started != null && started;
@@ -126,10 +144,12 @@ public class FfmpegPlayback implements Playback {
     @Override
     public void stop() {
         isInitialized = false;
+        resetCachedState();
         callOnPlayerThread(() -> {
             if (player != null) {
                 player.stop();
                 player.clearMediaItems();
+                cachePlayerState(player);
             }
             return null;
         }, null);
@@ -138,12 +158,14 @@ public class FfmpegPlayback implements Playback {
     @Override
     public void release() {
         isInitialized = false;
+        resetCachedState();
         callOnPlayerThread(() -> {
             if (player != null) {
                 player.release();
             }
             return null;
         }, null);
+        playerThread.quitSafely();
     }
 
     @Override
@@ -153,6 +175,7 @@ public class FfmpegPlayback implements Playback {
                 return false;
             }
             player.pause();
+            cachePlayerState(player);
             return true;
         }, false);
         return paused != null && paused;
@@ -160,26 +183,22 @@ public class FfmpegPlayback implements Playback {
 
     @Override
     public boolean isPlaying() {
-        Boolean playing = callOnPlayerThread(() -> player != null && player.isPlaying(), false);
-        return playing != null && playing;
+        return cachedIsPlaying;
     }
 
     @Override
     public int duration() {
-        Long duration = callOnPlayerThread(() -> player == null ? C.TIME_UNSET : player.getDuration(), C.TIME_UNSET);
-        return duration == null ? -1 : safeTimeToInt(duration);
+        return safeTimeToInt(cachedDuration);
     }
 
     @Override
     public int position() {
-        Long position = callOnPlayerThread(() -> player == null ? C.TIME_UNSET : player.getCurrentPosition(), C.TIME_UNSET);
-        return position == null ? -1 : safeTimeToInt(position);
+        return safeTimeToInt(getCachedPosition());
     }
 
     @Override
     public int bufferedPosition() {
-        Long position = callOnPlayerThread(() -> player == null ? C.TIME_UNSET : player.getBufferedPosition(), C.TIME_UNSET);
-        return position == null ? -1 : safeTimeToInt(position);
+        return safeTimeToInt(cachedBufferedPosition);
     }
 
     @Override
@@ -189,6 +208,8 @@ public class FfmpegPlayback implements Playback {
                 return false;
             }
             player.seekTo(whereto);
+            cachedPosition = whereto;
+            cachedPositionUpdateTime = SystemClock.elapsedRealtime();
             return true;
         }, false);
         return seeked != null && seeked ? whereto : -1;
@@ -213,6 +234,8 @@ public class FfmpegPlayback implements Playback {
                 return false;
             }
             player.setAudioSessionId(sessionId);
+            cachedAudioSessionId = sessionId;
+            cachePlayerState(player);
             return true;
         }, false);
         return sessionSet != null && sessionSet;
@@ -220,8 +243,7 @@ public class FfmpegPlayback implements Playback {
 
     @Override
     public int getAudioSessionId() {
-        Integer audioSessionId = callOnPlayerThread(() -> player == null ? C.AUDIO_SESSION_ID_UNSET : player.getAudioSessionId(), C.AUDIO_SESSION_ID_UNSET);
-        return audioSessionId == null ? C.AUDIO_SESSION_ID_UNSET : audioSessionId;
+        return cachedAudioSessionId;
     }
 
     public int getBufferedProgressPercent() {
@@ -232,6 +254,7 @@ public class FfmpegPlayback implements Playback {
         if (callbacks == null) {
             return;
         }
+        cachePlayerState(player);
         if (playbackState == Player.STATE_BUFFERING) {
             callbacks.onBufferingStarted();
         } else if (playbackState == Player.STATE_READY) {
@@ -251,6 +274,7 @@ public class FfmpegPlayback implements Playback {
     private void handlePlayerError() {
         isInitialized = false;
         bufferedPercent = 0;
+        resetCachedState();
         if (callbacks != null) {
             callbacks.onBufferingEnded();
         }
@@ -271,9 +295,44 @@ public class FfmpegPlayback implements Playback {
         return time > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) time;
     }
 
+    private void cachePlayerState(@Nullable Player player) {
+        if (player == null) {
+            resetCachedState();
+            return;
+        }
+        cachedIsPlaying = player.isPlaying();
+        cachedDuration = player.getDuration();
+        cachedPosition = player.getCurrentPosition();
+        cachedBufferedPosition = player.getBufferedPosition();
+        if (player instanceof ExoPlayer) {
+            cachedAudioSessionId = ((ExoPlayer) player).getAudioSessionId();
+        }
+        cachedPositionUpdateTime = SystemClock.elapsedRealtime();
+    }
+
+    private long getCachedPosition() {
+        long position = cachedPosition;
+        if (position == C.TIME_UNSET || position < 0) {
+            return position;
+        }
+        if (cachedIsPlaying) {
+            position += SystemClock.elapsedRealtime() - cachedPositionUpdateTime;
+        }
+        return cachedDuration > 0 ? Math.min(position, cachedDuration) : position;
+    }
+
+    private void resetCachedState() {
+        cachedIsPlaying = false;
+        cachedDuration = C.TIME_UNSET;
+        cachedPosition = C.TIME_UNSET;
+        cachedBufferedPosition = C.TIME_UNSET;
+        cachedPositionUpdateTime = SystemClock.elapsedRealtime();
+        cachedAudioSessionId = C.AUDIO_SESSION_ID_UNSET;
+    }
+
     @Nullable
     private <T> T callOnPlayerThread(@NonNull PlayerCall<T> call, @Nullable T fallback) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
+        if (Looper.myLooper() == playerThread.getLooper()) {
             try {
                 return call.run();
             } catch (RuntimeException e) {
@@ -282,7 +341,7 @@ public class FfmpegPlayback implements Playback {
         }
         AtomicReference<T> result = new AtomicReference<>(fallback);
         CountDownLatch latch = new CountDownLatch(1);
-        playerHandler.post(() -> {
+        boolean posted = playerHandler.post(() -> {
             try {
                 result.set(call.run());
             } catch (RuntimeException ignored) {
@@ -291,6 +350,9 @@ public class FfmpegPlayback implements Playback {
                 latch.countDown();
             }
         });
+        if (!posted) {
+            return fallback;
+        }
         try {
             if (!latch.await(PLAYER_CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
                 return fallback;
