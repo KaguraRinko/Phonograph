@@ -59,6 +59,7 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
     private AnimatorSet musicControllerAnimationSet;
 
     private boolean hidden = false;
+    private boolean progressSliderTracking;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -316,11 +317,25 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
 
         progressSlider.setOnSeekBarChangeListener(new SimpleOnSeekbarChangeListener() {
             @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                progressSliderTracking = true;
+                progressViewUpdateHelper.stop();
+            }
+
+            @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    MusicPlayerRemote.seekTo(progress);
-                    onUpdateProgressViews(MusicPlayerRemote.getSongProgressMillis(), MusicPlayerRemote.getSongDurationMillis());
+                    updateProgressText(progress, MusicPlayerRemote.getSongDurationMillis());
                 }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int progress = seekBar.getProgress();
+                progressSliderTracking = false;
+                MusicPlayerRemote.seekTo(progress);
+                onUpdateProgressViews(progress, MusicPlayerRemote.getSongDurationMillis());
+                progressViewUpdateHelper.start();
             }
         });
     }
@@ -330,8 +345,18 @@ public class FlatPlayerPlaybackControlsFragment extends AbsMusicServiceFragment 
         int safeTotal = Math.max(total, 0);
         int safeProgress = Math.max(progress, 0);
         progressSlider.setMax(safeTotal);
-        progressSlider.setProgress(safeProgress);
         progressSlider.setSecondaryProgress(Math.max(MusicPlayerRemote.getBufferedPositionMillis(), 0));
+        if (progressSliderTracking) {
+            updateProgressText(progressSlider.getProgress(), safeTotal);
+            return;
+        }
+        progressSlider.setProgress(safeProgress);
+        updateProgressText(safeProgress, safeTotal);
+    }
+
+    private void updateProgressText(int progress, int total) {
+        int safeTotal = Math.max(total, 0);
+        int safeProgress = Math.max(progress, 0);
         songTotalTime.setText(MusicUtil.getReadableDurationString(safeTotal));
         songCurrentProgress.setText(MusicUtil.getReadableDurationString(safeProgress));
     }
