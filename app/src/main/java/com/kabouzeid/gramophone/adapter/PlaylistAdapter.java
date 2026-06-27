@@ -216,10 +216,10 @@ public class PlaylistAdapter extends AbsMultiSelectAdapter<PlaylistAdapter.ViewH
     private List<Song> getSongList(@NonNull List<Playlist> playlists) {
         final List<Song> songs = new ArrayList<>();
         for (Playlist playlist : playlists) {
-            if (playlist instanceof AbsCustomPlaylist) {
-                songs.addAll(((AbsCustomPlaylist) playlist).getSongs(activity));
-            } else if (!MediaSourceManager.isCurrentSourceLocal(activity)) {
+            if (!MediaSourceManager.isCurrentSourceLocal(activity)) {
                 songs.addAll(MediaSourceManager.getCurrentRepository(activity).getSongsForPlaylist(activity, playlist));
+            } else if (playlist instanceof AbsCustomPlaylist) {
+                songs.addAll(((AbsCustomPlaylist) playlist).getSongs(activity));
             } else {
                 songs.addAll(PlaylistSongLoader.getPlaylistSongList(activity, playlist.id));
             }

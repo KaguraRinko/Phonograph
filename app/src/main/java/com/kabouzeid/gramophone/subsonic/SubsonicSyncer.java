@@ -16,10 +16,14 @@ import com.kabouzeid.gramophone.subsonic.rest.model.SubsonicPlaylist;
 import com.kabouzeid.gramophone.subsonic.rest.model.SubsonicResponse;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.TimeZone;
 
 public class SubsonicSyncer {
     private final Context context;
@@ -196,8 +200,36 @@ public class SubsonicSyncer {
                 safeString(child.artistId, album.artistId),
                 artistName,
                 child.genre,
-                safeString(child.coverArt, album.coverArt)
+                safeString(child.coverArt, album.coverArt),
+                parseSubsonicTime(child.created),
+                parseSubsonicTime(child.played),
+                safeInt(child.playCount),
+                safeInt(child.userRating)
         );
+    }
+
+    private long parseSubsonicTime(@Nullable String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return 0;
+        }
+        String[] patterns = new String[]{
+                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+                "yyyy-MM-dd'T'HH:mm:ssX"
+        };
+        for (String pattern : patterns) {
+            try {
+                SimpleDateFormat format = new SimpleDateFormat(pattern, Locale.US);
+                format.setTimeZone(TimeZone.getTimeZone("UTC"));
+                Date date = format.parse(value);
+                if (date != null) {
+                    return date.getTime() / 1000;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return 0;
     }
 
     private int parseTrack(@Nullable String track) {

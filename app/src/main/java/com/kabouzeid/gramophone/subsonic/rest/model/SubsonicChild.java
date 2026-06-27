@@ -15,9 +15,13 @@ public class SubsonicChild {
     public String suffix;
     public Integer duration;
     public Integer bitRate;
+    public Integer playCount;
+    public Integer userRating;
     public String path;
     public String albumId;
     public String artistId;
     public String type;
     public Boolean isDir;
+    public String created;
+    public String played;
 }

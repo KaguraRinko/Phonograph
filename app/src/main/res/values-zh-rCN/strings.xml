@@ -183,9 +183,10 @@
     <string name="could_not_download_album_cover">"\u65e0\u6cd5\u4e0b\u8f7d\u5230\u5339\u914d\u7684\u4e13\u8f91\u5c01\u9762\u3002"</string>
     <string name="search_hint">正在扫描</string>
     <string name="favorites">收藏夹</string>
+    <string name="top_rated">评分排行</string>
     <string name="last_added">最近添加</string>
     <string name="history">最近播放</string>
-    <string name="my_top_tracks">最喜爱的歌曲</string>
+    <string name="my_top_tracks">最多播放</string>
     <string name="remove_cover">移除专辑封面</string>
     <string name="download_from_last_fm">从 Last.fm 上下载</string>
     <string name="pick_from_local_storage">从本地储存中选取</string>

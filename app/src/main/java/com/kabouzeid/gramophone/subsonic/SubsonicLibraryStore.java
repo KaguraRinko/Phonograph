@@ -18,7 +18,7 @@ import java.util.List;
 
 public class SubsonicLibraryStore extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "subsonic_library.db";
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     private static final String TABLE_ID_MAP = "id_map";
     private static final String TABLE_SONGS = "songs";
@@ -42,6 +42,9 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
     private static final String COLUMN_ARTIST = "artist";
     private static final String COLUMN_GENRE = "genre";
     private static final String COLUMN_COVER_ART = "cover_art";
+    private static final String COLUMN_PLAYED = "played";
+    private static final String COLUMN_PLAY_COUNT = "play_count";
+    private static final String COLUMN_USER_RATING = "user_rating";
     private static final String COLUMN_NAME = "name";
     private static final String COLUMN_SONG_COUNT = "song_count";
     private static final String COLUMN_PLAYLIST_ID = "playlist_id";
@@ -95,7 +98,10 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
                 + COLUMN_ARTIST_ID + " INTEGER NOT NULL,"
                 + COLUMN_ARTIST + " TEXT NOT NULL,"
                 + COLUMN_GENRE + " TEXT,"
-                + COLUMN_COVER_ART + " TEXT"
+                + COLUMN_COVER_ART + " TEXT,"
+                + COLUMN_PLAYED + " INTEGER NOT NULL DEFAULT 0,"
+                + COLUMN_PLAY_COUNT + " INTEGER NOT NULL DEFAULT 0,"
+                + COLUMN_USER_RATING + " INTEGER NOT NULL DEFAULT 0"
                 + ");");
         db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_GENRES + " ("
                 + COLUMN_SERVER_ID + " INTEGER NOT NULL,"
@@ -121,6 +127,15 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(@NonNull SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE " + TABLE_SONGS + " ADD COLUMN "
+                    + COLUMN_PLAYED + " INTEGER NOT NULL DEFAULT 0;");
+            db.execSQL("ALTER TABLE " + TABLE_SONGS + " ADD COLUMN "
+                    + COLUMN_PLAY_COUNT + " INTEGER NOT NULL DEFAULT 0;");
+            db.execSQL("ALTER TABLE " + TABLE_SONGS + " ADD COLUMN "
+                    + COLUMN_USER_RATING + " INTEGER NOT NULL DEFAULT 0;");
+            return;
+        }
         dropTables(db);
         onCreate(db);
     }
@@ -307,6 +322,46 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
         return songs;
     }
 
+    @NonNull
+    public synchronized List<Song> getTopRatedSongs(long serverId) {
+        return getSongs(
+                serverId,
+                COLUMN_USER_RATING + ">0",
+                null,
+                COLUMN_USER_RATING + " DESC," + COLUMN_TITLE + " COLLATE NOCASE"
+        );
+    }
+
+    @NonNull
+    public synchronized List<Song> getLastAddedSongs(long serverId, long cutoff) {
+        return getSongs(
+                serverId,
+                COLUMN_DATE_MODIFIED + ">?",
+                new String[]{String.valueOf(cutoff)},
+                COLUMN_DATE_MODIFIED + " DESC," + COLUMN_TITLE + " COLLATE NOCASE"
+        );
+    }
+
+    @NonNull
+    public synchronized List<Song> getRecentlyPlayedSongs(long serverId) {
+        return getSongs(
+                serverId,
+                COLUMN_PLAYED + ">0",
+                null,
+                COLUMN_PLAYED + " DESC," + COLUMN_TITLE + " COLLATE NOCASE"
+        );
+    }
+
+    @NonNull
+    public synchronized List<Song> getMostPlayedSongs(long serverId) {
+        return getSongs(
+                serverId,
+                COLUMN_PLAY_COUNT + ">0",
+                null,
+                COLUMN_PLAY_COUNT + " DESC," + COLUMN_TITLE + " COLLATE NOCASE"
+        );
+    }
+
     @Nullable
     public synchronized String getCoverArt(long serverId, long songId) {
         Cursor cursor = getReadableDatabase().query(
@@ -401,13 +456,16 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
         values.put(COLUMN_YEAR, song.year);
         values.put(COLUMN_DURATION, song.duration);
         values.put(COLUMN_DATA, SubsonicUri.forSong(serverId, song.remoteId));
-        values.put(COLUMN_DATE_MODIFIED, syncTime);
+        values.put(COLUMN_DATE_MODIFIED, song.created > 0 ? song.created : syncTime);
         values.put(COLUMN_ALBUM_ID, albumId);
         values.put(COLUMN_ALBUM, song.albumName);
         values.put(COLUMN_ARTIST_ID, artistId);
         values.put(COLUMN_ARTIST, song.artistName);
         values.put(COLUMN_GENRE, song.genre);
         values.put(COLUMN_COVER_ART, song.coverArt);
+        values.put(COLUMN_PLAYED, song.played);
+        values.put(COLUMN_PLAY_COUNT, song.playCount);
+        values.put(COLUMN_USER_RATING, song.userRating);
         db.insert(TABLE_SONGS, null, values);
     }
 
@@ -533,11 +591,16 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
         public final String artistName;
         public final String genre;
         public final String coverArt;
+        public final long created;
+        public final long played;
+        public final int playCount;
+        public final int userRating;
 
         public CachedSong(@NonNull String remoteId, @NonNull String title, int trackNumber, int year,
                           long duration, @Nullable String remoteAlbumId, @NonNull String albumName,
                           @Nullable String remoteArtistId, @NonNull String artistName,
-                          @Nullable String genre, @Nullable String coverArt) {
+                          @Nullable String genre, @Nullable String coverArt, long created,
+                          long played, int playCount, int userRating) {
             this.remoteId = remoteId;
             this.title = title;
             this.trackNumber = trackNumber;
@@ -549,6 +612,10 @@ public class SubsonicLibraryStore extends SQLiteOpenHelper {
             this.artistName = artistName;
             this.genre = genre;
             this.coverArt = coverArt;
+            this.created = created;
+            this.played = played;
+            this.playCount = playCount;
+            this.userRating = userRating;
         }
     }
 

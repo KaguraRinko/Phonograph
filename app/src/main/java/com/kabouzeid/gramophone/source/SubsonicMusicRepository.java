@@ -1,10 +1,12 @@
 package com.kabouzeid.gramophone.source;
 
 import android.content.Context;
+import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.kabouzeid.gramophone.loader.TopAndRecentlyPlayedTracksLoader;
 import com.kabouzeid.gramophone.loader.AlbumLoader;
 import com.kabouzeid.gramophone.loader.ArtistLoader;
 import com.kabouzeid.gramophone.model.Album;
@@ -12,11 +14,18 @@ import com.kabouzeid.gramophone.model.Artist;
 import com.kabouzeid.gramophone.model.Genre;
 import com.kabouzeid.gramophone.model.Playlist;
 import com.kabouzeid.gramophone.model.Song;
+import com.kabouzeid.gramophone.model.smartplaylist.HistoryPlaylist;
+import com.kabouzeid.gramophone.model.smartplaylist.LastAddedPlaylist;
+import com.kabouzeid.gramophone.model.smartplaylist.MyTopTracksPlaylist;
+import com.kabouzeid.gramophone.model.smartplaylist.TopRatedPlaylist;
 import com.kabouzeid.gramophone.glide.subsonic.SubsonicCoverArt;
+import com.kabouzeid.gramophone.provider.HistoryStore;
+import com.kabouzeid.gramophone.provider.SongPlayCountStore;
 import com.kabouzeid.gramophone.subsonic.SubsonicLibraryStore;
 import com.kabouzeid.gramophone.subsonic.SubsonicServer;
 import com.kabouzeid.gramophone.subsonic.SubsonicUri;
 import com.kabouzeid.gramophone.subsonic.rest.SubsonicRestClient;
+import com.kabouzeid.gramophone.util.PreferenceUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,13 +130,69 @@ public class SubsonicMusicRepository implements MusicRepository {
     @NonNull
     @Override
     public List<Playlist> getAllPlaylists(@NonNull Context context) {
-        return SubsonicLibraryStore.getInstance(context).getAllPlaylists(server.id);
+        List<Playlist> playlists = new ArrayList<>();
+        playlists.add(new TopRatedPlaylist(context));
+        playlists.add(new LastAddedPlaylist(context));
+        playlists.add(new HistoryPlaylist(context));
+        playlists.add(new MyTopTracksPlaylist(context));
+        playlists.addAll(SubsonicLibraryStore.getInstance(context).getAllPlaylists(server.id));
+        return playlists;
     }
 
     @NonNull
     @Override
     public List<Song> getSongsForPlaylist(@NonNull Context context, @NonNull Playlist playlist) {
-        return SubsonicLibraryStore.getInstance(context).getSongsForPlaylist(server.id, playlist.id);
+        SubsonicLibraryStore store = SubsonicLibraryStore.getInstance(context);
+        if (playlist instanceof TopRatedPlaylist) {
+            return store.getTopRatedSongs(server.id);
+        } else if (playlist instanceof LastAddedPlaylist) {
+            return store.getLastAddedSongs(server.id, PreferenceUtil.getInstance(context).getLastAddedCutoff());
+        } else if (playlist instanceof HistoryPlaylist) {
+            List<Song> songs = store.getRecentlyPlayedSongs(server.id);
+            return songs.isEmpty() ? getRecentlyPlayedSongsFromLocalHistory(context) : songs;
+        } else if (playlist instanceof MyTopTracksPlaylist) {
+            List<Song> songs = store.getMostPlayedSongs(server.id);
+            return songs.isEmpty() ? getMostPlayedSongsFromLocalHistory(context) : songs;
+        }
+        return store.getSongsForPlaylist(server.id, playlist.id);
+    }
+
+    @NonNull
+    private List<Song> getRecentlyPlayedSongsFromLocalHistory(@NonNull Context context) {
+        Cursor cursor = HistoryStore.getInstance(context).queryRecentIds();
+        return getSongsFromLocalIdCursor(context, cursor, HistoryStore.RecentStoreColumns.ID);
+    }
+
+    @NonNull
+    private List<Song> getMostPlayedSongsFromLocalHistory(@NonNull Context context) {
+        Cursor cursor = SongPlayCountStore.getInstance(context)
+                .getTopPlayedResults(TopAndRecentlyPlayedTracksLoader.NUMBER_OF_TOP_TRACKS);
+        return getSongsFromLocalIdCursor(context, cursor, SongPlayCountStore.SongPlayCountColumns.ID);
+    }
+
+    @NonNull
+    private List<Song> getSongsFromLocalIdCursor(@NonNull Context context, @Nullable Cursor cursor,
+                                                 @NonNull String idColumnName) {
+        List<Song> songs = new ArrayList<>();
+        if (cursor == null) {
+            return songs;
+        }
+        try {
+            int idColumn = cursor.getColumnIndex(idColumnName);
+            if (idColumn < 0 || !cursor.moveToFirst()) {
+                return songs;
+            }
+            SubsonicLibraryStore store = SubsonicLibraryStore.getInstance(context);
+            do {
+                Song song = store.getSong(server.id, cursor.getLong(idColumn));
+                if (song.id != Song.EMPTY_SONG.id) {
+                    songs.add(song);
+                }
+            } while (cursor.moveToNext());
+            return songs;
+        } finally {
+            cursor.close();
+        }
     }
 
     @NonNull
